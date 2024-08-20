@@ -6,7 +6,7 @@
 # Protocol Specification Document
 
 ## MCP Members: Vikil Chandrapati, Eugene Tshien, Thomas Mikic, Ashton Lane, Krishang, Lardo Terblanche, Alice Nevmerzhytska, Danaan Lawton, Samuel Black, Benjamin Beashel, Muniendra Vasudevan, Keval Gandhi, Shreyas Reddy, Vaibhav Gupta, MD Samuil huga, Rohita Chidiireddi 
-
+# https://github.com/Vchandrapati/ENG3000MCP github link to the mcp
 **FEEL FREE TO LEAVE COMMENTS**
 
 [**Introduction	2**](\#introduction)
