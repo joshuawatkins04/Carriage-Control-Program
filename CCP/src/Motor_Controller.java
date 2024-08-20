@@ -1,3 +1,10 @@
+/*
+ * This file will handle the speed of the motor
+ * controller. Will need functions such as speed()
+ * emergencyStop(), direction(). Will receive input
+ * signals from Onboard_Master_CCP
+ */
+
 public class Motor_Controller {
     
 }
