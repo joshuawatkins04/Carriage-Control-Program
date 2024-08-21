@@ -6,5 +6,17 @@
  */
 
 public class Motor_Controller {
-    
+
+    public Motor_Controller() {
+
+    }
+
+    /*
+     * Used to determine if whole carriage is
+     * operational
+     */
+    boolean operational() {
+        // do something to determine
+        return true;
+    }
 }

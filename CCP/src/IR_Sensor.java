@@ -6,4 +6,16 @@
 
 public class IR_Sensor {
     
+    public IR_Sensor() {
+
+    }
+
+    /*
+     * Used to determine if whole carriage is
+     * operational
+     */
+    boolean operational() {
+        // do something to determine
+        return true;
+    }
 }
