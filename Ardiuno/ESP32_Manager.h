@@ -8,9 +8,7 @@ class ESP32_Manager {
 
     public:
 
-    ESP32_Manager() {
-
-    }
+    ESP32_Manager() {}
     
     string send_carriage_status() {
         return onboard_master_ccp.carriage_status();

@@ -1,6 +1,6 @@
 class Setup {
 
-    Setup() {
+    public:
 
-    }
+    Setup() {}
 };

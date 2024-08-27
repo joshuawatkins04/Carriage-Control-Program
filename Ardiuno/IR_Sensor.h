@@ -2,9 +2,7 @@ class IR_Sensor {
 
     public:
     
-    IR_Sensor() {
-
-    }
+    IR_Sensor() {}
 
     bool operational() {
         return true;
