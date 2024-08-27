@@ -1,11 +1,13 @@
 /*
- * Receives signals from the Offboard_Master_CCP
- * and connects to the Onboard_Master_CCP
- 
- 
- KEEP HERE JUST FOR TESTING PURPOSES JUST IN CASE
- 
- */
+
+THIS IS THE OLD JAVA CODE
+
+CHANGE TO C++
+
+
+
+// Receives signals from the Offboard_Master_CCP
+// and connects to the Onboard_Master_CCP
 
 public class ESP32_Manager {
     
@@ -39,3 +41,4 @@ public class ESP32_Manager {
         onboard_master_ccp.door_Command(s);
     }
 }
+*/

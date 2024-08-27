@@ -1,13 +1,15 @@
 /*
+
+THIS IS THE OLD JAVA CODE
+
+CHANGE TO C++
+
+
  * Takes in outputs from the Servo_Controller
  * IR_Sensor and Servo_Controller and handles
  * this information to then send it to the ESP32
  * Manager and then the Offboard CCP to the MCP.
- * 
- * 
- * KEEP HERE FOR TESTING PURPOSES
- * 
- */
+ 
 
 public class Onboard_Master_CCP {
     
@@ -25,20 +27,20 @@ public class Onboard_Master_CCP {
         MC = motor_controller.operational();
     }
 
-    /*
+    
      * Determines whether all components of
      * bladerunner are operational, then returns
      * this information to carriageStatus()
      * to then communicate this to the MCP.
-     */
+     
     boolean operational() {
         return IS && SC && MC;
     }
 
-    /*
+    
      * Communicates with MCP to tell the program
      * the status of the carriage
-     */
+     
     String carriage_Status() {
         if (operational()) {
             return "ON";
@@ -55,3 +57,6 @@ public class Onboard_Master_CCP {
         servo_controller.change_State(s);
     }
 }
+
+
+*/
