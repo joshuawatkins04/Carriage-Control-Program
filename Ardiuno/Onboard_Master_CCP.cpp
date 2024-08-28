@@ -61,3 +61,29 @@ public class Onboard_Master_CCP {
 
 */
 
+#include <iostream>
+#include <string>
+#include "Onboard_Master_CCP.h"
+
+
+int main() {
+    
+    Onboard_Master_CCP onboard_Master_CCP;
+    bool running = false;
+    int count = 0;
+
+    // Check for if SM, IR, MC are operational.
+    if (onboard_Master_CCP.operational()) {
+        running = true;
+    } else {
+        std::cout << "Program failed" << stderr;
+        exit(1);
+    }
+
+    while (running) {
+        count++;
+        std::cout << "Looping through " << count << " times";
+    }
+
+    return 0;
+}
