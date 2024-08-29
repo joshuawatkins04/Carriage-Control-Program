@@ -4,11 +4,11 @@ import java.net.*;
 
 public class UDPTest {
     
-    CCP_TEST_CLIENT client;
+    CCP_Client client;
 
     public void setup() throws SocketException, UnknownHostException {
-        new CCP_TEST_CLIENT().start();
-        client = new CCP_TEST_CLIENT();
+        new CCP_Client().start();
+        client = new CCP_Client();
     }
 
     public void testSend() throws IOException {

@@ -6,38 +6,29 @@
  * Offboard CCP?
  */
 
+import java.io.IOException;
+import java.net.SocketException;
+import java.net.UnknownHostException;
+
 public class CCP_Connection_Man {
 
-    ESP32_Manager esp32_manager;
+    CCP_Client client;
 
     public CCP_Connection_Man() {
-        esp32_manager = new ESP32_Manager();
+
     }
 
-    /*
-     * Function needs to send directly to MCP
-     * This function will be called in Offboard CCP when it needs to send this to MCP.
-     */
-    String send_Carriage_Status() {
-        // needs to write this to the open port thingo in the MCP
-
-        // this return is just here for testing
-        return esp32_manager.send_Carriage_Status();
+    public void setup() throws SocketException, UnknownHostException {
+        new CCP_Client().start();
+        client = new CCP_Client();
     }
 
-    boolean get_IS_Status() {
-        return esp32_manager.get_IS_Status();
+    public void send_to_MCP(String Message) throws IOException {
+        client.sendEcho(Message);
     }
 
-    boolean get_MC_Status() {
-        return esp32_manager.get_MC_Status();
-    }
-
-    boolean get_SC_Status() {
-        return esp32_manager.get_SC_Status();
-    }
-
-    String get_Door_State() {
-        return esp32_manager.get_Door_State();
+    public void end_connection() throws IOException {
+        client.sendEcho("end");
+        client.close();
     }
 }

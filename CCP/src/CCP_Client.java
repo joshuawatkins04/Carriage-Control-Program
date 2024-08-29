@@ -7,20 +7,20 @@ import java.net.*;
  * 
  * Will also need to set up a function to manage requests from the MCP
  */
-public class CCP_TEST_CLIENT {
+public class CCP_Client {
     
     private final DatagramSocket socket;
     private final InetAddress address;
     private byte[] buf;
 
-    public CCP_TEST_CLIENT() throws SocketException, UnknownHostException {
+    public CCP_Client() throws SocketException, UnknownHostException {
         socket = new DatagramSocket();
         address = InetAddress.getByName("localhost");
     }
 
     // Starts server
     public void start() throws SocketException {
-        MCP_TEST_SERVER server = new MCP_TEST_SERVER();
+        MCP_SERVER server = new MCP_SERVER();
         server.start();
     }
 
