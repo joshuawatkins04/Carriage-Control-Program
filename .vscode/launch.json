@@ -2,6 +2,13 @@
   "configurations": [
     {
       "type": "java",
+      "name": "MCP_SERVER",
+      "request": "launch",
+      "mainClass": "MCP_SERVER",
+      "projectName": "Carriage-Control-Program_852a9385"
+    },
+    {
+      "type": "java",
       "name": "Offboard_Master_CCP",
       "request": "launch",
       "mainClass": "Offboard_Master_CCP",
