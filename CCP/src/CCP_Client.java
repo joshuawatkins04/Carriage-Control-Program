@@ -11,7 +11,10 @@ import java.net.DatagramPacket;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.net.SocketException;
+import java.sql.Timestamp;
 import org.json.simple.JSONObject;
+import org.json.simple.JSONValue;
+import org.json.simple.JSONArray;
 
 public class CCP_Client {
     
@@ -26,10 +29,22 @@ public class CCP_Client {
     }
 
     // Send UPD packet as a String. Needs to change so it sends JSON message
-    public void sendEcho(String message) throws IOException {
+    public void sendPacket(String message) throws IOException {
         buf = message.getBytes();
         sendPacket = new DatagramPacket(buf, buf.length, IPAddress, 2001);
         clientSocket.send(sendPacket);
+    }
+
+    // Does handshake CCIN command
+    public void command1() throws IOException {
+        Timestamp timestamp = new Timestamp(System.currentTimeMillis());
+        JSONObject obj = new JSONObject();
+        obj.put("client_type", "ccp");
+        obj.put("message", "CCIN");
+        obj.put("client_id", "BRXX");
+        obj.put("timestamp", timestamp);
+        String message = JSONValue.toJSONString(obj);
+        sendPacket(message);
     }
 
     public void receiveMessage() throws IOException {

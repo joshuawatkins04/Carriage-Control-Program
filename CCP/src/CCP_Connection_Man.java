@@ -12,8 +12,12 @@ public class CCP_Connection_Man {
         client = new CCP_Client();
     }
 
-    public void send_to_MCP(String Message) throws IOException {
-        client.sendEcho(Message);
+    // public void send_to_MCP(String Message) throws IOException {
+    //     client.sendPacket(Message);
+    // }
+
+    public void send_command1() throws IOException {
+        client.command1();
     }
 
     public void receive_message() throws IOException {
@@ -21,7 +25,7 @@ public class CCP_Connection_Man {
     }
 
     public void end_connection() throws IOException {
-        client.sendEcho("END");
+        client.sendPacket("END");
         client.close();
     }
 }
