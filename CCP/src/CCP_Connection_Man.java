@@ -12,12 +12,14 @@ public class CCP_Connection_Man {
         client = new CCP_Client();
     }
 
-    // public void send_to_MCP(String Message) throws IOException {
-    //     client.sendPacket(Message);
-    // }
-
-    public void send_command1() throws IOException {
-        client.command1();
+    public void handshake() throws IOException {
+        client.handshake();
+    }
+    public void send_status() throws IOException {
+        client.send_status();
+    }
+    public void send_at_station() throws IOException {
+        client.send_at_station();
     }
 
     public void receive_message() throws IOException {

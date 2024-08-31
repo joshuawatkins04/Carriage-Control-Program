@@ -9,14 +9,23 @@ class Connect_CCP extends Thread {
     
     public void run() {
         CCP_Connection_Man ccp_connection_man = new CCP_Connection_Man();
+        boolean arrived_at_station = true; // NEED TO HAVE SOMETHING CHANGE THIS VALUE
         try {
             ccp_connection_man.setup();
-            ccp_connection_man.send_command1();
+            ccp_connection_man.handshake();
+            ccp_connection_man.receive_message();
+            
             // Controls speed of loop for sending packets
-            for (int i = 0; i < 1; i++) {
-                //ccp_connection_man.send_to_MCP("Test");
-                //ccp_connection_man.receive_message();
-                Thread.sleep(1000);
+            // Loops every 3 seconds
+            for (int i = 0; i < 3; i++) {
+                ccp_connection_man.send_status();
+                ccp_connection_man.receive_message();
+
+                if (arrived_at_station) {
+                    ccp_connection_man.send_at_station();
+                }
+
+                Thread.sleep(3000);
             }
             ccp_connection_man.end_connection();
         } catch (InterruptedException | IOException e) {
@@ -29,6 +38,9 @@ public class Offboard_Master_CCP {
 
     public static void main(String[] args) {
         
+        System.out.print("\033[H\033[2J");  
+        System.out.flush();
+
         Connect_CCP thread = new Connect_CCP();
         thread.start();
 

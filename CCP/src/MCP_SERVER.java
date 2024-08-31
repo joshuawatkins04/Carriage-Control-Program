@@ -8,7 +8,6 @@ import java.net.DatagramPacket;
 import java.net.InetAddress;
 import java.net.SocketException;
 import java.sql.Timestamp;
-import org.json.simple.JSONObject;
 
 public class MCP_SERVER extends Thread {
     
@@ -49,6 +48,10 @@ public class MCP_SERVER extends Thread {
 
         sendPacket = new DatagramPacket(buf, buf.length, receivePacket.getAddress(), receivePacket.getPort());
         serverSocket.send(sendPacket);
+
+        if (receivedMessage.contains("AKIN")) {
+          System.out.println("AKIN received");
+        }
 
         if (receivedMessage.contains("END")) {
             System.out.println("Told to 'end' so closing server.");

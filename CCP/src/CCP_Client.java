@@ -11,16 +11,16 @@ import java.net.DatagramPacket;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.net.SocketException;
-import java.sql.Timestamp;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONValue;
-import org.json.simple.JSONArray;
 
 public class CCP_Client {
     
     private final DatagramSocket clientSocket;
     private final InetAddress IPAddress;
     private byte[] buf;
+    private long timestamp;
+    private String status, message, station_id;
     DatagramPacket sendPacket, receivePacket;
 
     public CCP_Client() throws SocketException, UnknownHostException {
@@ -35,22 +35,55 @@ public class CCP_Client {
         clientSocket.send(sendPacket);
     }
 
-    // Does handshake CCIN command
-    public void command1() throws IOException {
-        Timestamp timestamp = new Timestamp(System.currentTimeMillis());
+    // Command: CCIN
+    public void handshake() throws IOException {
+        timestamp = System.currentTimeMillis() / 1000L;
         JSONObject obj = new JSONObject();
         obj.put("client_type", "ccp");
         obj.put("message", "CCIN");
         obj.put("client_id", "BRXX");
-        obj.put("timestamp", timestamp);
-        String message = JSONValue.toJSONString(obj);
+        obj.put("timestamp", "" + timestamp);
+        message = JSONValue.toJSONString(obj);
+        sendPacket(message);
+    }
+
+    // Command: STAT
+    // When called, needs to grab status of blade runner
+    // Status must be: STOPPED/STARTED/ON/OFF/ERR/CRASH
+    public void send_status() throws IOException {
+        timestamp = System.currentTimeMillis() / 1000L;
+        status = "ON";
+        JSONObject obj = new JSONObject();
+        obj.put("client_type", "ccp");
+        obj.put("message", "STAT");
+        obj.put("client_id", "BRXX");
+        obj.put("timestamp", "" + timestamp);
+        obj.put("status", "" + status);
+        message = JSONValue.toJSONString(obj);
+        sendPacket(message);
+    }
+
+    // Command: STAT
+    // Sends packet when at a station
+    public void send_at_station() throws IOException {
+        timestamp = System.currentTimeMillis() / 1000L;
+        status = "STOPPED_AT_STATION";
+        station_id = "STXX"; // NEED TO RETURN A VALUE HERE
+        JSONObject obj = new JSONObject();
+        obj.put("client_type", "ccp");
+        obj.put("message", "STAT");
+        obj.put("client_id", "BRXX");
+        obj.put("timestamp", "" + timestamp);
+        obj.put("status", "" + status);
+        obj.put("station_id", "" + station_id);
+        message = JSONValue.toJSONString(obj);
         sendPacket(message);
     }
 
     public void receiveMessage() throws IOException {
         receivePacket = new DatagramPacket(buf, buf.length);
         clientSocket.receive(receivePacket);
-        String received = new String(receivePacket.getData(), 0, receivePacket.getLength());
+        String received = new String(receivePacket.getData(), receivePacket.getOffset(), receivePacket.getLength());
         System.out.println("ACK Message received from MCP: " + received);
     }
 
