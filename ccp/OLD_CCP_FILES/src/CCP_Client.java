@@ -45,6 +45,7 @@ public class CCP_Client {
         obj.put("timestamp", "" + timestamp);
         message = JSONValue.toJSONString(obj);
         sendPacket(message);
+        
     }
 
     // Command: STAT
