@@ -3,6 +3,7 @@
 #include "Servo_Controller.h"
 #include "Motor_Controller.h"
 #include "ESP32_Manager.h"
+#include "Setup.h"
 #include <thread>
 
 class Onboard_Master_CCP
@@ -66,6 +67,7 @@ public:
         // Stopped State CCPState == 0
         if (BladeRunnerState == 0)
         {
+            Setup::setup(); // calls the setup does not create an instance of it
             ThreadConnection = std::thread(ThreadConnectionFoo, this);
             BladeRunnerState = 1; // Running
         }
