@@ -51,13 +51,13 @@ public class MainCCP {
         Main.start();
 
         while(CCPState!= 0){
-            if (MCPMessageRecieved == "SlowDown"){
+            if ("SlowDown".contains(MCPMessageRecieved)){
                 ESPMessageToSend = "SlowDown";
             }
-            if (MCPMessageRecieved == "SpeedUp"){
+            if ("SpeedUp".contains(MCPMessageRecieved)){
                 ESPMessageToSend = "SpeedUp";
             }
-            if (MCPMessageRecieved == "Stop"){
+            if ("Stop".contains(MCPMessageRecieved)){
                 ESPMessageToSend = "Stop";
             }
             //etc
@@ -74,17 +74,21 @@ public class MainCCP {
                 connectionManagerMCP.receive_message();
                 // Controls speed of loop for sending packets
                 // Loops every 3 seconds
-                for (int i = 0; i < 3; i++) {
-                    if (MCPMessageToSend != ""){
+                while (CCPState == 1) {
+                    if (!"".equals(MCPMessageToSend)){
                         connectionManagerMCP.send_at_station();
-                        connectionManagerMCP.receive_message(); // This needs Visibility to give me the ability to set MCPMessageRecieved
+                        String message = connectionManagerMCP.receive_message();
+                        if (!"".equals(message) || message != null) {
+                            MCPMessageRecieved = message;
+                        }
+                         // This needs Visibility to give me the ability to set MCPMessageRecieved
                     
                     }
                     else {
                         connectionManagerMCP.send_status();
                         connectionManagerMCP.receive_message(); // This needs Visibility to give me the ability to set MCPMessageRecieved
                     }
-                    if(MCPMessageRecieved == "Confirm"){
+                    if("Confirm".contains(MCPMessageRecieved)){
                         MCPMessageToSend = "";
                     }
                     Thread.sleep(3000);
