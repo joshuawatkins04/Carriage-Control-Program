@@ -1,5 +1,9 @@
 #include "Setup.h"
 
+
+#ifndef IR_SENSOR_H
+#define IR_SENSOR_H
+
 class IR_Sensor {
     private:
         int ir_sensor_pin; //change to pin thats being used
@@ -15,6 +19,8 @@ class IR_Sensor {
         return sensorState == HIGH;
     }
 };
+
+#endif
 
 /* IMPLEMENT somewhere idk?
 void loop() {

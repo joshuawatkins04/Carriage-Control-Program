@@ -1,11 +1,11 @@
 package ccp;
 
 import java.io.IOException;
-import java.net.DatagramSocket;
 import java.net.DatagramPacket;
+import java.net.DatagramSocket;
 import java.net.InetAddress;
-import java.net.UnknownHostException;
 import java.net.SocketException;
+import java.net.UnknownHostException;
 
 public class Client {
     
@@ -29,16 +29,23 @@ public class Client {
         }
     }
 
-    public void receiveMessage() {
+    public String receiveMessage() {
+        GetMessageInfo message = new GetMessageInfo();
+
         receivePacket = new DatagramPacket(buf, buf.length);
         try {
             clientSocket.receive(receivePacket);
             String received = new String(receivePacket.getData(), receivePacket.getOffset(), receivePacket.getLength());
-            System.out.println("ACK Message received from MCP: " + received);
+            message.getMessage();
+            return message.toString();
+            //System.out.println("ACK Message received from MCP: " + received);
         } catch (IOException e) {
             System.out.println("Failed to receive packet." + e);
+            return null;
         }
     }
+
+
 
     // Closes socket
     public void close() {

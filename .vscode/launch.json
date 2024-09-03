@@ -1,59 +1,84 @@
 {
-  "configurations": [
-    {
-      "type": "java",
-      "name": "MainCCP",
-      "request": "launch",
-      "mainClass": "ccp.MainCCP",
-      "projectName": "ccp"
-    },
-    {
-      "type": "java",
-      "name": "TestServer",
-      "request": "launch",
-      "mainClass": "ccp.TestServer",
-      "projectName": "ccp"
-    },
-    {
-      "type": "java",
-      "name": "MCP_SERVER",
-      "request": "launch",
-      "mainClass": "MCP_SERVER",
-      "projectName": "Carriage-Control-Program_852a9385"
-    },
-    {
-      "type": "java",
-      "name": "Offboard_Master_CCP",
-      "request": "launch",
-      "mainClass": "Offboard_Master_CCP",
-      "projectName": "Carriage-Control-Program_852a9385"
-    },
-    {
-      "name": "C/C++: g++.exe build and debug active file",
-      "type": "cppdbg",
-      "request": "launch",
-      "program": "${fileDirname}\\${fileBasenameNoExtension}.exe",
-      "args": [],
-      "stopAtEntry": false,
-      "cwd": "C:\\msys64\\ucrt64\\bin",
-      "environment": [],
-      "externalConsole": false,
-      "MIMode": "gdb",
-      "miDebuggerPath": "gdb.exe",
-      "setupCommands": [
+    "configurations": [
         {
-          "description": "Enable pretty-printing for gdb",
-          "text": "-enable-pretty-printing",
-          "ignoreFailures": true
+            "type": "java",
+            "name": "MainCCP",
+            "request": "launch",
+            "mainClass": "ccp.MainCCP",
+            "projectName": "ccp"
         },
         {
-          "description": "Set Disassembly Flavor to Intel",
-          "text": "-gdb-set disassembly-flavor intel",
-          "ignoreFailures": true
+            "type": "java",
+            "name": "TestServer",
+            "request": "launch",
+            "mainClass": "ccp.TestServer",
+            "projectName": "ccp"
+        },
+        {
+            "type": "java",
+            "name": "MCP_SERVER",
+            "request": "launch",
+            "mainClass": "MCP_SERVER",
+            "projectName": "Carriage-Control-Program_852a9385"
+        },
+        {
+            "type": "java",
+            "name": "Offboard_Master_CCP",
+            "request": "launch",
+            "mainClass": "Offboard_Master_CCP",
+            "projectName": "Carriage-Control-Program_852a9385"
+        },
+        {
+            "name": "C/C++: g++.exe build and debug active file",
+            "type": "cppdbg",
+            "request": "launch",
+            "program": "${fileDirname}\\${fileBasenameNoExtension}.exe",
+            "args": [],
+            "stopAtEntry": false,
+            "cwd": "C:\\msys64\\ucrt64\\bin",
+            "environment": [],
+            "externalConsole": false,
+            "MIMode": "gdb",
+            "miDebuggerPath": "gdb.exe",
+            "setupCommands": [
+                {
+                    "description": "Enable pretty-printing for gdb",
+                    "text": "-enable-pretty-printing",
+                    "ignoreFailures": true
+                },
+                {
+                    "description": "Set Disassembly Flavor to Intel",
+                    "text": "-gdb-set disassembly-flavor intel",
+                    "ignoreFailures": true
+                }
+            ],
+            "preLaunchTask": "C/C++: g++.exe build active file"
+        },
+        {
+            "name": "(gdb) Launch",
+            "type": "cppdbg",
+            "request": "launch",
+            "program": "enter program name, for example ${workspaceFolder}/a.exe",
+            "args": [],
+            "stopAtEntry": false,
+            "cwd": "${fileDirname}",
+            "environment": [],
+            "externalConsole": false,
+            "MIMode": "gdb",
+            "miDebuggerPath": "/path/to/gdb",
+            "setupCommands": [
+                {
+                    "description": "Enable pretty-printing for gdb",
+                    "text": "-enable-pretty-printing",
+                    "ignoreFailures": true
+                },
+                {
+                    "description": "Set Disassembly Flavor to Intel",
+                    "text": "-gdb-set disassembly-flavor intel",
+                    "ignoreFailures": true
+                }
+            ]
         }
-      ],
-      "preLaunchTask": "C/C++: g++.exe build active file"
-    }
-  ],
-  "version": "2.0.0"
+    ],
+    "version": "2.0.0"
 }

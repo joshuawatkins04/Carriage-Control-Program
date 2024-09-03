@@ -1,7 +1,7 @@
 #include "Onboard_Master_CCP.h"
 
 int main() {
-    std::cout << "hello";
+    Onboard_Master_CCP onboard_Master_CCP;
 
     return 0;
 }

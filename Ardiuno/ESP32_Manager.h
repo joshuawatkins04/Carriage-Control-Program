@@ -1,6 +1,9 @@
 #include <iostream>
 #include <string>
-#include "Onboard_Master_CCP.h"
+// #include "Onboard_Master_CCP.h"
+
+#ifndef ESP32_H
+#define ESP32_H
 
 class ESP32_Manager {
 
@@ -34,3 +37,5 @@ class ESP32_Manager {
         onboard_master_ccp.door_command(s);
     }
 };
+
+#endif

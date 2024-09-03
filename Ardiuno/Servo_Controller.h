@@ -1,5 +1,8 @@
 #include <iostream>
+#include "Setup.h"
 #define string std::string
+#ifndef SERVO_CONTROLLER_H
+#define SERVO_CONTROLLER_H
 
 class Servo_Controller {
 
@@ -28,3 +31,5 @@ class Servo_Controller {
         }
     }
 };
+
+#endif

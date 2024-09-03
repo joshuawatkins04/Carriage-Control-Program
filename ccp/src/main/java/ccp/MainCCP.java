@@ -78,6 +78,7 @@ public class MainCCP {
                     if (MCPMessageToSend != ""){
                         connectionManagerMCP.send_at_station();
                         connectionManagerMCP.receive_message(); // This needs Visibility to give me the ability to set MCPMessageRecieved
+                    
                     }
                     else {
                         connectionManagerMCP.send_status();

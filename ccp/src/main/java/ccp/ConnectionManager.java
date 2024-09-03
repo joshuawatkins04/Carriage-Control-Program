@@ -22,8 +22,8 @@ public class ConnectionManager {
         client.sendPacket(GenerateMessage.generateStationStatusMessage(System.currentTimeMillis()));
     }
 
-    public void receive_message() throws IOException {
-        client.receiveMessage();
+    public String receive_message() throws IOException {
+        return client.receiveMessage();
     }
 
     public void end_connection() throws IOException {

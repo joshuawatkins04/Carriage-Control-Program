@@ -1,5 +1,8 @@
 #include "Setup.h"
 
+#ifndef MOTOR_CONTROLLER_H
+#define MOTOR_CONTROLLER_H
+
 class Motor_Controller {
     private:
         int motor_speed_pin; // pwm pin connected
@@ -46,3 +49,5 @@ class Motor_Controller {
         current_speed = 255;
     }
 };
+
+#endif
