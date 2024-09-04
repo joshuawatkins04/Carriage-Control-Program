@@ -8,11 +8,10 @@ class Servo_Controller {
   private:
 
     int _servo_pin;
-    int _doorState;
 
   public:
 
-    IR_Sensor(int pin1);
+    Servo_Controller(int pin1);
 
     void testFunction(int test);
     int getDoorState();

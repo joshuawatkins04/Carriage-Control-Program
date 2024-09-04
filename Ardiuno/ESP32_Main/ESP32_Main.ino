@@ -5,7 +5,6 @@
 #define green_led 26
 #define yellow_led 27
 #define red_led 28
-#define doorState 0
 //#define LED 21
 
 #include <Motor_Controller.h>
@@ -14,8 +13,8 @@
 
 // Initialise Classes
 Motor_Controller mc(motor_direction, motor_speed);
-IR_Sensor ir(ir_sensor, LED);
-Servo_Controller sc(servo, doorState);
+IR_Sensor ir(ir_sensor);
+Servo_Controller sc(servo);
 
 // Setup
 void setup() {

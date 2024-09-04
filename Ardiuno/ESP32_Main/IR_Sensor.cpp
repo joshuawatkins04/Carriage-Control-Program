@@ -16,7 +16,7 @@ void IR_Sensor::testFunction(int test) {
 void IR_Sensor::detect() {
   int SensorStatus = digitalRead(_ir_sensor_pin);
 
-  if (sensorStatus == 1) {
+  if (SensorStatus == 1) {
     //digitalWrite(_led_pin, LOW);
     //Serial.println("Motion Ended!");
   } else {

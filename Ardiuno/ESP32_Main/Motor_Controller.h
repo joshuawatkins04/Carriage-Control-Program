@@ -9,6 +9,7 @@ class Motor_Controller {
 
     int _motor_direction_pin;
     int _motor_speed_pin;
+    int _current_speed;
 
   public:
 

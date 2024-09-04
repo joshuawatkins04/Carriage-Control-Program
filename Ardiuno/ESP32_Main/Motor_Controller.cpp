@@ -1,12 +1,15 @@
 #include "Arduino.h"
 #include "Motor_Controller.h"
 
+int current_speed;
+
 Motor_Controller::Motor_Controller(int pin1, int pin2) {
   pinMode(pin1, OUTPUT);
   pinMode(pin2, OUTPUT);
 
   _motor_direction_pin = pin1;
   _motor_speed_pin = pin2;
+  current_speed = 0;
 }
 
 void Motor_Controller::testFunction(int test) {
