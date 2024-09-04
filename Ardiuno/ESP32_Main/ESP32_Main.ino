@@ -11,7 +11,7 @@
 #include <IR_Sensor.h>
 #include <Servo_Controller.h>
 
-// Initialise Classes
+// Initialise Classes and assigns pins to each
 Motor_Controller mc(motor_direction, motor_speed);
 IR_Sensor ir(ir_sensor);
 Servo_Controller sc(servo);
