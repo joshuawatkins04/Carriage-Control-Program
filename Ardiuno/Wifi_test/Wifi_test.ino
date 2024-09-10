@@ -3,7 +3,7 @@
 
 WiFiUDP udp;
 
-const char* ssid = "ENGG2K3K";
+char* ssid = (char*)"ENGG2K3K";
 
 IPAddress ip(10, 20, 30, 115);
 IPAddress udpAddress(10, 20, 30, 1);
@@ -56,10 +56,10 @@ void recieveMsg(){
     Serial.print("Server to client: ");
     Serial.println((char *)inBuffer);
     if(inBuffer == "START") {
-      sendMsg("STARTING");
+      sendMsg((char*)"STARTING");
     }
     if(inBuffer == "STOP") {
-      sendMsg("STOPPING");
+      sendMsg((char*)"STOPPING");
     }
   }
 }
@@ -67,7 +67,7 @@ void recieveMsg(){
 void loop(){
 
 
-  sendMsg("Seconds since boot: " + millis()/1000);
+  sendMsg((char*)"Seconds since boot: " + millis()/1000);
   recieveMsg();
   
   delay(1000); 
