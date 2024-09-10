@@ -12,22 +12,39 @@ class udptoESP {
   private DatagramSocket socket;
   private byte[] buf = new byte[256];
   private InetAddress address;
+  private int recieveport = 4445;
+  private int sendport = 4446;
+
+  private InetAddress senderaddress;
+  private int senderport;
 
   public udptoESP() throws SocketException, UnknownHostException {
-      socket = new DatagramSocket();
-      address = InetAddress.getByName("localhost");
+      socket = new DatagramSocket(recieveport);
+      address = InetAddress.getByName("localhost"); // Destination address
   }
 
   String read() throws IOException{
       DatagramPacket packet = new DatagramPacket(buf, buf.length);
       socket.receive(packet);
       String received = new String(packet.getData(), 0, packet.getLength());
+
+      senderaddress = packet.getAddress();
+      senderport = packet.getPort();
+
       return received; 
+  }
+
+  InetAddress getIP() throws IOException{
+    return senderaddress;
+  }
+
+  int getPort() throws IOException{
+    return senderport;
   }
 
   void write(String msg) throws IOException{
       buf = msg.getBytes();
-      DatagramPacket packet = new DatagramPacket(buf, buf.length, address, 4445);
+      DatagramPacket packet = new DatagramPacket(buf, buf.length, address, sendport);
       socket.send(packet);
   }
 
@@ -41,16 +58,58 @@ public class TestServer extends Thread {
     
   private static DatagramSocket serverSocket;
   private boolean running;
-  private byte[] buf;
+  private byte[] buf = new byte[256];
   DatagramPacket receivePacket, sendPacket;
 
   udptoESP client;
 
   public static void main(String[] args) throws SocketException {
-    serverSocket = new DatagramSocket(3016);
     new TestServer().run();
   }
 
+  
+  // Running the server to receive packets
+  @Override
+  public void run() {
+
+    
+    try {
+      client = new udptoESP();
+      running = true;
+      while (running) {
+        
+        client.write("START");
+
+        String msg = client.read();
+        if (msg != null){
+          
+          Timestamp timestamp = new Timestamp(System.currentTimeMillis());
+          System.out.println("[" + 
+            timestamp.toString() + ", IP: " + 
+            client.getIP() + ", Port: " + 
+            client.getPort() + "] Message: " + 
+            msg
+          );
+
+        }
+
+        if (msg.contains("AKIN")) {
+          System.out.println("AKIN received");
+        }
+
+        if (msg.contains("END")) {
+            System.out.println("Told to 'end' so closing server.");
+            running = false;
+            serverSocket.close();
+            continue;
+        }
+      }
+    } catch (IOException e) {
+        System.out.println(e);
+    }
+  }
+
+  /*
   // Running the server to receive packets
   @Override
   public void run() {
@@ -99,4 +158,5 @@ public class TestServer extends Thread {
         System.out.println(e);
     }
   }
+    */
 }
