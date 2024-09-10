@@ -39,28 +39,29 @@ void setup() {
   digitalWrite(yellow_led, LOW);
   digitalWrite(red_led, LOW);
 
-  delay(1000);
+//   delay(1000);
   
-  WiFi.config(ip, gateway, subnet, dns);
-  WiFi.begin(ssid);
-  Serial.println("\nConnecting");
+//   WiFi.config(ip, gateway, subnet, dns);
+//   WiFi.begin(ssid);
+//   Serial.println("\nConnecting");
   
-  while(WiFi.status() != WL_CONNECTED){
-      Serial.print(".");
-      delay(100);
-  }
+//   while(WiFi.status() != WL_CONNECTED){
+//       Serial.print(".");
+//       delay(100);
+//   }
   
-  Serial.println("\nConnected to the WiFi network");
-  Serial.print("[+] ESP32 IP : ");
-  Serial.println(WiFi.localIP());
+//   Serial.println("\nConnected to the WiFi network");
+//   Serial.print("[+] ESP32 IP : ");
+//   Serial.println(WiFi.localIP());
   
-  udp.begin(udpLocalPort);
+//   udp.begin(udpLocalPort);
 }
 
 void loop() {
   Serial.println("\nBeginning main loop");
-  //motor_test();
-  //led_test();
+  
+  motor_test();
+  led_test();
   //servo_test();
   //ir_test();
 }
