@@ -20,18 +20,24 @@ class udptoESP {
 
   public udptoESP() throws SocketException, UnknownHostException {
       socket = new DatagramSocket(recieveport);
+      socket.setSoTimeout(1000);
       address = InetAddress.getByName("localhost"); // Destination address
   }
 
   String read() throws IOException{
       DatagramPacket packet = new DatagramPacket(buf, buf.length);
-      socket.receive(packet);
-      String received = new String(packet.getData(), 0, packet.getLength());
-
-      senderaddress = packet.getAddress();
-      senderport = packet.getPort();
-
-      return received; 
+      try {
+        
+        socket.receive(packet);
+        String received = new String(packet.getData(), 0, packet.getLength());
+  
+        senderaddress = packet.getAddress();
+        senderport = packet.getPort();
+  
+        return received; 
+      } catch (Exception e) {
+        return null;
+      }
   }
 
   InetAddress getIP() throws IOException{
@@ -91,17 +97,18 @@ public class TestServer extends Thread {
             msg
           );
 
-        }
+        
 
-        if (msg.contains("AKIN")) {
-          System.out.println("AKIN received");
-        }
+          if (msg.contains("AKIN")) {
+            System.out.println("AKIN received");
+          }
 
-        if (msg.contains("END")) {
-            System.out.println("Told to 'end' so closing server.");
-            running = false;
-            serverSocket.close();
-            continue;
+          if (msg.contains("END")) {
+              System.out.println("Told to 'end' so closing server.");
+              running = false;
+              serverSocket.close();
+              continue;
+          }
         }
       }
     } catch (IOException e) {
