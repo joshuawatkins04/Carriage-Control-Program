@@ -7,7 +7,7 @@ import java.net.InetAddress;
 import java.net.SocketException;
 import java.sql.Timestamp;
 
-public class testCCP extends Thread {
+public class TestCCP extends Thread {
     
   private static DatagramSocket serverSocket;
   private boolean running;
@@ -16,7 +16,7 @@ public class testCCP extends Thread {
 
   public static void main(String[] args) throws SocketException {
     serverSocket = new DatagramSocket(2001);
-    new testCCP().run();
+    new TestCCP().run();
   }
 
   // Running the server to receive packets
