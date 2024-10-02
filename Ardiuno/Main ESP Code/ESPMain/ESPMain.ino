@@ -11,16 +11,15 @@
 
 WiFiUDP udp;
 
-IPAddress ip(10, 20, 30, 115);
-IPAddress udpAddress(10, 20, 30, 1);
-IPAddress dns(192, 168, 43, 1);
-IPAddress gateway(192, 168, 43, 1);
-IPAddress subnet(255, 255, 255, 0);
+const char *ssid = "WIFI NAME";
+const char *password = "WIFI PASSWORD"; 
 
-const int udpLocalPort = 3015;
-const int udpAddressPort = 3016;
+const unsigned int localUdpPort = 4210;  // Local port to listen on
+char inBuffer[255];
+
 char inBuffer[255];
 char outBuffer[255];
+
 char* ssid;
 int state;
 int current_speed;
@@ -30,26 +29,27 @@ int sensor_status;
 
 void setup() {
   Serial.begin(115200);
+  Serial.println();
 
   state = 0;
   current_speed = 0;
   door_state = 0;
   move_state = 0;
-  ssid = (char*)"ENGG2K3K";
 
-  WiFi.config(ip, gateway, subnet, dns);
-  WiFi.begin(ssid);
-  Serial.println("\nConnecting");
-
+  // Connect to Wi-Fi
+  Serial.printf("Connecting to %s ", ssid);
+  WiFi.begin(ssid, password);
   while (WiFi.status() != WL_CONNECTED) {
+    delay(500);
     Serial.print(".");
-    delay(100);
   }
-  Serial.println("\nConnected to the WiFi network");
-  Serial.print("[+] ESP32 IP : ");
-  Serial.println(WiFi.localIP());
+  Serial.println(" connected");
 
-  udp.begin(udpLocalPort);
+  // Start listening for UDP packets
+  udp.begin(localUdpPort);
+  Serial.printf("Now listening at IP %s, UDP port %d\n", WiFi.localIP().toString().c_str(), localUdpPort);
+
+
   pinMode(motor_speed, OUTPUT);
   pinMode(motor_direction, OUTPUT);
   pinMode(green_led, OUTPUT);
