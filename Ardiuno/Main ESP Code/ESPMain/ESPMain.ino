@@ -15,9 +15,9 @@ const char *ssid = "WIFI NAME";
 const char *password = "WIFI PASSWORD"; 
 
 const unsigned int localUdpPort = 4210;  // Local port to listen on
-char inBuffer[255];
+char incomingPacket[255];
 
-char inBuffer[255];
+
 char outBuffer[255];
 
 char* ssid;
@@ -68,8 +68,8 @@ void loop() {
   while (state == 0) {
     Serial.println("Initialising connection with ESP and CCP");
     receive_message();
-    if (inBuffer == "START") {
-      send_message((char*) "STARTING");
+    if (incomingPacket == "INIT (From CCP)") {
+      send_message((char*) "INIT packet successful (FROM ESP32)");
       state = 1;
     }
     delay(1000);
@@ -78,22 +78,22 @@ void loop() {
   // Main loop
   while (state == 1) {
     receive_message();
-    if (inBuffer == "QUIT") {
+    if (incomingPacket == "QUIT") {
       state = 2;
       break;
     } 
-    else if (inBuffer == "STOP") stop_br();
-    else if (inBuffer == "SLOW") slow_br();
-    else if (inBuffer == "FAST") fast_br();
+    else if (incomingPacket == "STOP") stop_br();
+    else if (incomingPacket == "SLOW") slow_br();
+    else if (incomingPacket == "FAST") fast_br();
     
     // Check if needs to open doors only when stopped
     if (move_state == 0) {
-      if (inBuffer == "OPEN_DOOR") {
+      if (incomingPacket == "OPEN_DOOR") {
         if (door_state == 0) {
           Serial.println("Opening Door");
           open_door();
         }
-      } else if (inBuffer == "CLOSE_DOOR") {
+      } else if (incomingPacket == "CLOSE_DOOR") {
         if (door_state == 1) {
           Serial.println("Closing Door");
           close_door();
@@ -114,17 +114,20 @@ void loop() {
 
 /* Wifi Code */
 void send_message(char str[255]) {
-  strcpy(outBuffer, str);
-  udp.beginPacket(udpAddress, udpAddressPort);
-  udp.write((const uint8_t*)outBuffer, 11);
+  udp.beginPacket(udp.remoteIP(), udp.remotePort());
+  udp.write(str);
   udp.endPacket();
+  Serial.printf("Sent a UDP packet to %s, port %d\n", udp.remoteIP().toString().c_str(), udp.remotePort());
 }
 void receive_message() {
-  udp.parsePacket();
-  if (udp.read(inBuffer, 255) > 0) { // udp.read is assigning a string to inBuffer in this line??
-    Serial.println("Received message: ");
-    Serial.print((char*) inBuffer);
-    // if (inBuffer == "STOP") send_message((char*) "STOPPING");
+  int packetSize = udp.parsePacket();
+  if (packetSize) {
+    int len = udp.read(incomingPacket, 255);
+    if (len > 0) {
+      incomingPacket[len] = 0;
+    }
+    Serial.printf("Received %d bytes from %s, port %d\n", packetSize, udp.remoteIP().toString().c_str(), udp.remotePort());
+    Serial.printf("UDP packet contents: %s\n", incomingPacket);
   }
 }
 
