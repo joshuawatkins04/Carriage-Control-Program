@@ -11,8 +11,8 @@ public class TESTServerMCP {
 
     private static final int bufferSize = 1024;
     private static final int mcpPort = 4000;
-    private static final String mcpAddress = "192.168.0.37";
-    private static final int serverPort = 4210;
+    private static final String ccpAddress = "192.168.0.37";
+    private static final int ccpPort = 4210;
     private static final ObjectMapper objectMapper = new ObjectMapper();
 
     public static void main(String[] args) {
