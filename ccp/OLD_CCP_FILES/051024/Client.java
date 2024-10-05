@@ -45,8 +45,6 @@ public class Client {
         }
     }
 
-
-
     // Closes socket
     public void close() {
         clientSocket.close();

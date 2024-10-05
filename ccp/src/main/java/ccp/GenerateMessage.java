@@ -6,41 +6,17 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 public class GenerateMessage {
     
     private static final ObjectMapper objectMapper = new ObjectMapper();
-    private static String ccp = "ccp";
+    private static String ccp = "CCP";
     private static String brID = "BR06";
+    private static int sequenceNumber = 1000;
 
-    public static String generateHandshakeMessage(Long timestamp) {
+    public static String generateInitiationMessage() {
         GetMessageInfo message = new GetMessageInfo();
         
         message.setClientType(ccp);
         message.setMessage("CCIN");
         message.setClientID(brID);
-        message.setTimestamp(timestamp);
-
-        return convertToJson(message);
-    }
-
-    public static String generateStatusMessage(Long timestamp) {
-        GetMessageInfo message = new GetMessageInfo();
-        
-        message.setClientType(ccp);
-        message.setMessage("STAT");
-        message.setClientID(brID);
-        message.setTimestamp(timestamp);
-        message.setStatus("ON"); // need to change
-
-        return convertToJson(message);
-    }
-
-    public static String generateStationStatusMessage(Long timestamp) {
-        GetMessageInfo message = new GetMessageInfo();
-        
-        message.setClientType(ccp);
-        message.setMessage("STAT");
-        message.setClientID(brID);
-        message.setTimestamp(timestamp);
-        message.setStatus("STOPPED_AT_STATION");
-        message.setStation("STXX"); // Needs to grab StationID
+        message.setSequenceNumber(sequenceNumber);
 
         return convertToJson(message);
     }
