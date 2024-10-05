@@ -11,14 +11,29 @@ public class GenerateMessage {
     private static int sequenceNumber = 1000;
 
     public static String generateInitiationMessage() {
-        GetMessageInfo message = new GetMessageInfo();
-        
-        message.setClientType(ccp);
-        message.setMessage("CCIN");
-        message.setClientID(brID);
-        message.setSequenceNumber(sequenceNumber);
+        return generateMessage("CCIN", null);
+    }
 
+    public static String generateStatusMessage(String status) {
+        return generateMessage("STAT", status);
+    }
+
+    public static String generateAckMessage() {
+        return generateMessage("AKEX", null);
+    }
+
+    private static String generateMessage(String messageType, String status) {
+        GetMessageInfo message = new GetMessageInfo();
+        message.setClientType(ccp);
+        message.setMessage(messageType);
+        message.setClientID(brID);
+        message.setSequenceNumber(incrementSequenceNumber());
+        message.setStatus(status);
         return convertToJson(message);
+    }
+
+    private static synchronized int incrementSequenceNumber() {
+        return sequenceNumber++;
     }
 
     private static String convertToJson(GetMessageInfo message) {
@@ -26,7 +41,7 @@ public class GenerateMessage {
             return objectMapper.writeValueAsString(message);
         } catch (JsonProcessingException e) {
             e.printStackTrace();
-            return null;
+            return "Error with message";
         }
     }
 }

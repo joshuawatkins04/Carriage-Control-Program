@@ -11,6 +11,9 @@ char incomingPacket[255];  // Buffer for incoming packets
 IPAddress javaServerIP(192, 168, 0, 37);
 unsigned int javaServerPort = 4210;
 
+char door_status[10] = "CLOSED";
+char move_status[10] = "STOPPED";
+
 void setup() {
   Serial.begin(115200);
   Serial.println();
@@ -36,24 +39,38 @@ void loop() {
   if (state == 0) {
     Serial.println("Initialising connection with ESP and Java Server");
 
-    send_message("INIT from ESP", javaServerIP, javaServerPort);
+    send_message("(INIT) from ESP", javaServerIP, javaServerPort);
     delay(1000);
 
     receive_message();
 
-    if (strcmp(incomingPacket, "INIT from Java") == 0) {
-      send_message("Initialising packet successful (FROM ESP32)", javaServerIP, javaServerPort);
+    if (strcmp(incomingPacket, "(INIT Confirmed) from CCP") == 0) {
+      // send_message("Initialising packet successful (FROM ESP32)", javaServerIP, javaServerPort);
       state = 1;
     }
   }
 
 
   if (state == 1) {
-    send_message("COMMAND_1", javaServerIP, javaServerPort);
+    send_message("STOPC", javaServerIP, javaServerPort);
     delay(1000);
 
     receive_message();
     Serial.printf("Java server responded: %s\n", incomingPacket);
+
+    if (strcmp(incomingPacket, "STOPC") == 0) {
+      send_message("Acting on STOPC", javaServerIP, javaServerPort);
+    } else if (strcmp(incomingPacket, "STOPO") == 0) {
+      send_message("Acting on STOPO", javaServerIP, javaServerPort);
+    } else if (strcmp(incomingPacket, "FSLOWC") == 0) {
+      send_message("Acting on FSLOWC", javaServerIP, javaServerPort);
+    } else if (strcmp(incomingPacket, "FFASTC") == 0) {
+      send_message("Acting on FFASTC", javaServerIP, javaServerPort);
+    } else if (strcmp(incomingPacket, "RSLOWC") == 0) {
+      send_message("Acting on RSLOWC", javaServerIP, javaServerPort);
+    } else if (strcmp(incomingPacket, "DISCONNECT") == 0) {
+      send_message("Acting on DISCONNECT", javaServerIP, javaServerPort);
+    }
 
     delay(2000);
   }
@@ -77,80 +94,12 @@ void receive_message() {
     Serial.printf("UDP packet contents: %s\n", incomingPacket);
   }
 }
-
-
-// #include <WiFi.h>
-// #include <WiFiUdp.h>
-
-// WiFiUDP udp;
-
-// IPAddress ip(10, 20, 30, 115);
-// IPAddress udpAddress(10, 20, 30, 1);
-// IPAddress dns(192, 168, 43, 1);
-// IPAddress gateway(192, 168, 43, 1);
-// IPAddress subnet(255, 255, 255, 0);
-
-// const int udpLocalPort = 3015;
-// const int udpAddressPort = 3016;
-// char inBuffer[255];
-// char outBuffer[255];
-// char* ssid;
-
-// void setup() {
-//   Serial.begin(115200);
-
-//   ssid = (char*)"ENGG2K3K";
-
-//   WiFi.config(ip, gateway, subnet, dns);
-//   WiFi.begin(ssid);
-//   Serial.println("\nConnecting");
-
-//   while (WiFi.status() != WL_CONNECTED) {
-//     Serial.print(".");
-//     delay(100);
-//   }
-//   Serial.println("\nConnected to the WiFi network");
-//   Serial.print("[+] ESP32 IP : ");
-//   Serial.println(WiFi.localIP());
-
-//   udp.begin(udpLocalPort);
-// }
-
-// int state = 0;
-// void loop() {
-//   while (state == 0) {
-//     Serial.println("Initialising connection with ESP and CCP");
-//     receive_message();
-//     if (inBuffer == "START") {
-//       send_message((char*) "STARTING");
-//       state = 1;
-//     }
-//     delay(1000);
-//   }
-
-//   while (state == 1) {
-//     Serial.println("Connection established");
-//     delay(2000);
-//   }
-// }
-
-// /* Wifi Code */
-// void send_message(char str[255]) {
-//   strcpy(outBuffer, str);
-//   udp.beginPacket(udpAddress, udpAddressPort);
-//   udp.write((const uint8_t*)outBuffer, 11);
-//   udp.endPacket();
-// }
-// void receive_message() {
-//   udp.parsePacket();
-//   if (udp.read(inBuffer, 255) > 0) { // udp.read is assigning a string to inBuffer in this line??
-//     Serial.println("Received message: ");
-//     Serial.print((char*) inBuffer);
-//     // if (inBuffer == "STOP") send_message((char*) "STOPPING");
-//   } else {
-//     Serial.println("Message was not received");
-//   }
-// }
+char* get_status() {
+  // static char message[50];
+  // snprintf(message, sizeof(message), "(STAT) Door: %s Moving: %s", door_status, move_status);
+  char* message = "STOPC";
+  return message;
+}
 
 
 
