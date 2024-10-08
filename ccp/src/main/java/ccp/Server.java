@@ -37,17 +37,18 @@ public class Server {
             socket = new DatagramSocket(ccpPort);
             System.out.println("Server listening on port: " + ccpPort);
 
-            /* NO NEED FOR SCHEDULER. CHANGE SO THAT IT 
-             * CHECKS FOR STRQ COMMAND OR SENDS STATUS
-             * MESSAGE EVERYTIME BR STATUS CHANGES
-             */
-
             while (currentState != State.QUIT) {
+                
                 receivePacket = receivePacket(socket);
                 receivedMessage = new String(receivePacket.getData(), 0, receivePacket.getLength());
 
                 System.out.println("Received message: " + receivedMessage);
 
+                /*
+                 * Initialising state - Will wait for a packet from ESP containing INIT
+                 * and then sending Initiation message to MCP and then waiting for a
+                 * AKIN response from MCP before entering RUNNING state
+                 */
                 if (currentState == State.INITIALISING && receivedMessage.contains("(INIT) from ESP")) {
 
                     // Get ESP IP and Port and then send back an INIT acknowledgement
@@ -66,11 +67,17 @@ public class Server {
                         currentState = State.RUNNING;
                     }
 
-                } else if (currentState == State.RUNNING) {
+                } 
+                
+                /*
+                 * Running state - Main loop that will check for several commands from MCP and
+                 * some packets from ESP.
+                 */
+                else if (currentState == State.RUNNING) {
 
                     // check if it is requesting STAT message
                     if (receivePacket.getPort() == mcpPort && receivedMessage.contains("STRQ")) {
-                        // send stat message to MCP
+                        sendPacket(socket, GenerateMessage.generateStatusMessage(status), mcpAddress, mcpPort);
                     }
 
                     // Determine whether its a message from ESP or MCP
