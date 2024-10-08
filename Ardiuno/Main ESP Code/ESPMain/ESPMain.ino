@@ -50,7 +50,6 @@ void setup() {
   udp.begin(localUdpPort);
   Serial.printf("Now listening at IP %s, UDP port %d\n", WiFi.localIP().toString().c_str(), localUdpPort);
 
-
   pinMode(motor_speed, OUTPUT);
   pinMode(motor_direction, OUTPUT);
   pinMode(green_led, OUTPUT);
@@ -118,6 +117,8 @@ void loop() {
     // is already aligned with IR photodiode
     // BR should not move
     else if (strcmp(incomingPacket, "RSLOWC") == 0) {
+
+      // Once has achieved moving slow and then stopped with doors closed, then send STOPC back
       send_message("STOPC", javaServerIP, javaServerPort);
     } 
     // BR status LED should flash at 2 HZ to
@@ -126,28 +127,6 @@ void loop() {
       send_message("OFLN", javaServerIP, javaServerPort);
       state = 2;
       break;
-    }
-    
-    // Check if needs to open doors only when stopped
-    if (move_state == 0) {
-      if (incomingPacket == "OPEN_DOOR") {
-        if (door_state == 0) {
-          Serial.println("Opening Door");
-          open_door();
-        }
-      } else if (incomingPacket == "CLOSE_DOOR") {
-        if (door_state == 1) {
-          Serial.println("Closing Door");
-          close_door();
-        }
-      }
-    } 
-    // Needs to check for LED to stop completely at a station???
-    else if (move_state == 1) {
-      detect();
-      if (sensor_status >= 150 && sensor_status <= 220) {
-        stop_br();
-      }
     }
 
     delay(500);

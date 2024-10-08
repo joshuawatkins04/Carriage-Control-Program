@@ -1,24 +1,16 @@
 package ccp;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
-import com.fasterxml.jackson.annotation.JsonProperty;
-
 
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public class GetMessageInfo {
 
-    @JsonProperty("client_type")
     private String clientType;
     private String message;
-    @JsonProperty("client_id")
     private String clientID;
     private int sequenceNumber;
     private String action;
-    // private Long timestamp;
     private String status;
-    // private String station;
-    // @JsonProperty("door_direction")
-    // private String doorDirection;
     private String brID;
     
     public GetMessageInfo() {}
@@ -31,8 +23,6 @@ public class GetMessageInfo {
         this.action = action;
         this.status = status;
         this.brID = brID;
-        // this.station = station;
-        // this.doorDirection = doorDirection;
     }
 
     public String getClientType() {
@@ -90,28 +80,4 @@ public class GetMessageInfo {
     public void setBrID(String brID) {
         this.brID = brID;
     }
-
-    // public Long getTimestamp() {
-    //     return timestamp;
-    // }
-
-    // public void setTimestamp(Long timestamp) {
-    //     this.timestamp = timestamp;
-    // }
-
-    // public String getStation() {
-    //     return station;
-    // }
-
-    // public void setStation(String station) {
-    //     this.station = station;
-    // }
-
-    // public String getDoorDirection() {
-    //     return doorDirection;
-    // }
-
-    // public void setDoorDirection(String doorDirection) {
-    //     this.doorDirection = doorDirection;
-    // }
 }
