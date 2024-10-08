@@ -91,10 +91,16 @@ void loop() {
 
     // BR should stop and close doors
     if (strcmp(incomingPacket, "STOPC") == 0) {
-      send_message("STOPC", javaServerIP, javaServerPort);
+      stop_br();
+      close_door();
+      delay(1000); // Could be bad to have this delay but how do we know when it has
+      // completely stopped?
+        send_message("STOPC", javaServerIP, javaServerPort);
     } 
     // BR shuold stop and open doors
     else if (strcmp(incomingPacket, "STOPO") == 0) {
+      stop_br();
+      open_door();
       send_message("STOPO", javaServerIP, javaServerPort);
     } 
     // BR should move forward slowly and stop 
@@ -104,11 +110,17 @@ void loop() {
     // BR is already aligned with an IR 
     // photodiode, the BR should not move.
     else if (strcmp(incomingPacket, "FSLOWC") == 0) {
+      slow_br();
+      // do something with IR sensor to detect
+      // once detected, stop
+      stop_br();
       send_message("STOPC", javaServerIP, javaServerPort);
     } 
     // BR moving in forward direction at fast speed
     // and door is closed
     else if (strcmp(incomingPacket, "FFASTC") == 0) {
+      fast_br();
+      if (door_state == 1) close_door();
       send_message("FFASTC", javaServerIP, javaServerPort);
     } 
     // BR move backwards slowly and stop after it
@@ -117,8 +129,9 @@ void loop() {
     // is already aligned with IR photodiode
     // BR should not move
     else if (strcmp(incomingPacket, "RSLOWC") == 0) {
-
+      // need move backwards command
       // Once has achieved moving slow and then stopped with doors closed, then send STOPC back
+      stop_br();
       send_message("STOPC", javaServerIP, javaServerPort);
     } 
     // BR status LED should flash at 2 HZ to
