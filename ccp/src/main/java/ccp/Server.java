@@ -5,13 +5,6 @@ import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
-import java.util.concurrent.Executors;
-import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicReference;
-
-import ccp.Server.State;
-
 
 public class Server {
     
@@ -30,12 +23,8 @@ public class Server {
         QUIT
     }
 
-    // private static final ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(1);
-
     public static void main(String[] args) throws UnknownHostException {
 
-        // AtomicReference<DatagramSocket> socketRef = new AtomicReference<>();
-        // AtomicReference<State> currentState = new AtomicReference<>(State.INITIALISING);
         currentState = State.INITIALISING;
         mcpAddress = InetAddress.getByName("192.168.0.103");
         status = "ERR";
@@ -45,24 +34,13 @@ public class Server {
         System.out.flush();
 
         try {
-            socket = new DatagramSocket();
-            // socketRef.set(socket);
+            socket = new DatagramSocket(ccpPort);
             System.out.println("Server listening on port: " + ccpPort);
 
             /* NO NEED FOR SCHEDULER. CHANGE SO THAT IT 
              * CHECKS FOR STRQ COMMAND OR SENDS STATUS
              * MESSAGE EVERYTIME BR STATUS CHANGES
              */
-            // scheduler.scheduleAtFixedRate(() -> {
-            //     if (currentState.get() == State.RUNNING) {
-            //         try {
-            //             sendPacket(socket, GenerateMessage.generateStatusMessage(status), mcpAddress, mcpPort);
-            //             System.out.println("Current Status: " + status);
-            //         } catch (IOException e) {
-            //             e.printStackTrace();
-            //         }
-            //     }
-            // }, 0, 2, TimeUnit.SECONDS);
 
             while (currentState != State.QUIT) {
                 receivePacket = receivePacket(socket);
@@ -90,9 +68,21 @@ public class Server {
 
                 } else if (currentState == State.RUNNING) {
 
+                    // check if it is requesting STAT message
+                    if (receivePacket.getPort() == mcpPort && receivedMessage.contains("STRQ")) {
+                        // send stat message to MCP
+                    }
+
                     // Determine whether its a message from ESP or MCP
-                    if (receivePacket.getPort() == mcpPort && receivedMessage.contains("EXEC")) {
+                    else if (receivePacket.getPort() == mcpPort && receivedMessage.contains("EXEC")) {
                         
+                        // MUST SEND A AKEX packet to MCP to tell
+                        // it that packet was received for every
+                        // MCP packet
+                        // Also might not need the second part of if statement
+
+                        sendPacket(socket, GenerateMessage.generateAckMessage(), mcpAddress, mcpPort);
+
                         // If from MCP and it has any of the commands do following:
                         // - Send the command packet to ESP
                         // - Wait for ACK from ESP that it has executed that command
@@ -109,9 +99,11 @@ public class Server {
                         // sendToMcp = GenerateMessage.gen
 
                     } else if (receivePacket.getPort() == espPort) {
-                        // MIGHT NOT NEED THIS
-                        // maybe because esp is already sending 2 second updates on status
-                        // and when MCP forces a STAT update it will ask.
+                        
+                        // Needs to check the status values and send
+                        // this to MCP.
+                        // Make a handleEspCommand() function with the 
+                        // commands
                     }
 
                 } else if (currentState == State.STOPPED) {

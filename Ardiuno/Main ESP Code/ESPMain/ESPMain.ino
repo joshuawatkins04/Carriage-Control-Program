@@ -90,18 +90,40 @@ void loop() {
     receive_message();
     Serial.printf("Java server responded: %s\n", incomingPacket);
 
+    // BR should stop and close doors
     if (strcmp(incomingPacket, "STOPC") == 0) {
-      send_message("Acting on STOPC", javaServerIP, javaServerPort);
-    } else if (strcmp(incomingPacket, "STOPO") == 0) {
-      send_message("Acting on STOPO", javaServerIP, javaServerPort);
-    } else if (strcmp(incomingPacket, "FSLOWC") == 0) {
-      send_message("Acting on FSLOWC", javaServerIP, javaServerPort);
-    } else if (strcmp(incomingPacket, "FFASTC") == 0) {
-      send_message("Acting on FFASTC", javaServerIP, javaServerPort);
-    } else if (strcmp(incomingPacket, "RSLOWC") == 0) {
-      send_message("Acting on RSLOWC", javaServerIP, javaServerPort);
-    } else if (strcmp(incomingPacket, "DISCONNECT") == 0) {
-      send_message("Acting on DISCONNECT", javaServerIP, javaServerPort);
+      send_message("STOPC", javaServerIP, javaServerPort);
+    } 
+    // BR shuold stop and open doors
+    else if (strcmp(incomingPacket, "STOPO") == 0) {
+      send_message("STOPO", javaServerIP, javaServerPort);
+    } 
+    // BR should move forward slowly and stop 
+    // after it has aligned itself with the IR 
+    // photodiode at a checkpoint or station. 
+    // BR doors are to remain closed. If the 
+    // BR is already aligned with an IR 
+    // photodiode, the BR should not move.
+    else if (strcmp(incomingPacket, "FSLOWC") == 0) {
+      send_message("STOPC", javaServerIP, javaServerPort);
+    } 
+    // BR moving in forward direction at fast speed
+    // and door is closed
+    else if (strcmp(incomingPacket, "FFASTC") == 0) {
+      send_message("FFASTC", javaServerIP, javaServerPort);
+    } 
+    // BR move backwards slowly and stop after it
+    // is aligned with IR photodiode at checkpoint
+    // Br doors are to remain closed. If BR
+    // is already aligned with IR photodiode
+    // BR should not move
+    else if (strcmp(incomingPacket, "RSLOWC") == 0) {
+      send_message("STOPC", javaServerIP, javaServerPort);
+    } 
+    // BR status LED should flash at 2 HZ to
+    // indicate that it is to be removed from track
+    else if (strcmp(incomingPacket, "DISCONNECT") == 0) {
+      send_message("OFLN", javaServerIP, javaServerPort);
       state = 2;
       break;
     }
