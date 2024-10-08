@@ -5,6 +5,8 @@
 #define red_led 21
 #define ir_sensor 30 //CHANGE
 #define servo 31 //CHANGE
+#define trigger 25
+#define echo 26
 
 #include <WiFi.h>
 #include <WiFiUdp.h>
@@ -27,6 +29,7 @@ int current_speed;
 int door_state;
 int move_state;
 int sensor_status;
+int safeDisconnect;
 
 void setup() {
   Serial.begin(115200);
@@ -36,6 +39,7 @@ void setup() {
   current_speed = 0;
   door_state = 0;
   move_state = 0;
+  safeDisconnect = 0;
 
   // Connect to Wi-Fi
   Serial.printf("Connecting to %s ", ssid);
@@ -60,10 +64,12 @@ void setup() {
   digitalWrite(green_led, LOW);
   digitalWrite(yellow_led, LOW);
   digitalWrite(red_led, LOW);
+  pinMode(trigger,OUTOUT);
+  pinMode(echo,INPUT);
 }
 
 void loop() {
-  
+  long duration,distance;
   // Initialise connection with wifi packets
   while (state == 0) {
     Serial.println("Initialising connection with ESP and Java Server");
@@ -79,8 +85,12 @@ void loop() {
     }
   }
 
+
   // Main loop
   while (state == 1) {
+
+    
+
     receive_message();
 
     send_message("STOPC", javaServerIP, javaServerPort);
@@ -88,6 +98,21 @@ void loop() {
 
     receive_message();
     Serial.printf("Java server responded: %s\n", incomingPacket);
+    //Collision Detection
+    digitalWrite(trigger, LOW);
+    delayMicroseconds(2);
+    digitalWrite(trigger, HIGH);
+    delayMicroseconds(10);
+    digitalWrite(trigger, LOW);
+    duration = pulseIn(echoPin, HIGH);
+    distance = (duration / 2) / 29.1;
+
+    if(distance < 10 && distance > 0)
+    {
+      stop_br();
+      close_door()
+      send_message("STOPC", javaServerIP, javaServerPort); // read in the MCP document if we do emergency stop to send STOPC
+    }
 
     // BR should stop and close doors
     if (strcmp(incomingPacket, "STOPC") == 0) {
@@ -138,11 +163,25 @@ void loop() {
     // indicate that it is to be removed from track
     else if (strcmp(incomingPacket, "DISCONNECT") == 0) {
       send_message("OFLN", javaServerIP, javaServerPort);
+      safeDisconnect = 1;
       state = 2;
       break;
     }
 
     delay(500);
+  }
+
+  while(safeDisconnect == 1)
+  {
+    // flashes twice a second to let us know to disconnect.
+    digitalWrite(green_led, LOW);
+    digitalWrite(yellow_led, LOW);
+    digitalWrite(red_led, LOW);
+    delay(250);
+    digitalWrite(green_led, HIGH);
+    digitalWrite(yellow_led, HIGH);
+    digitalWrite(red_led, HIGH);
+    delay(250);
   }
 }
 
