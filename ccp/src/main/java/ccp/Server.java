@@ -10,6 +10,8 @@ import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
 
+import ccp.Server.State;
+
 
 public class Server {
     
@@ -19,6 +21,7 @@ public class Server {
     private static String receivedMessage, status, sendToEsp;
     private static InetAddress espAddress, mcpAddress;
     private static int espPort;
+    private static State currentState;
 
     private enum State {
         INITIALISING,
@@ -27,41 +30,47 @@ public class Server {
         QUIT
     }
 
-    private static final ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(1);
+    // private static final ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(1);
 
     public static void main(String[] args) throws UnknownHostException {
 
-        AtomicReference<DatagramSocket> socketRef = new AtomicReference<>();
-        AtomicReference<State> currentState = new AtomicReference<>(State.INITIALISING);
+        // AtomicReference<DatagramSocket> socketRef = new AtomicReference<>();
+        // AtomicReference<State> currentState = new AtomicReference<>(State.INITIALISING);
+        currentState = State.INITIALISING;
         mcpAddress = InetAddress.getByName("192.168.0.103");
         status = "ERR";
+        DatagramSocket socket = null;
 
         System.out.print("\033[H\033[2J");
         System.out.flush();
 
         try {
-            DatagramSocket socket = new DatagramSocket(ccpPort);
-            socketRef.set(socket);
+            socket = new DatagramSocket();
+            // socketRef.set(socket);
             System.out.println("Server listening on port: " + ccpPort);
 
-            scheduler.scheduleAtFixedRate(() -> {
-                if (currentState.get() == State.RUNNING) {
-                    try {
-                        sendPacket(socket, GenerateMessage.generateStatusMessage(status), mcpAddress, mcpPort);
-                        System.out.println("Current Status: " + status);
-                    } catch (IOException e) {
-                        e.printStackTrace();
-                    }
-                }
-            }, 0, 2, TimeUnit.SECONDS);
+            /* NO NEED FOR SCHEDULER. CHANGE SO THAT IT 
+             * CHECKS FOR STRQ COMMAND OR SENDS STATUS
+             * MESSAGE EVERYTIME BR STATUS CHANGES
+             */
+            // scheduler.scheduleAtFixedRate(() -> {
+            //     if (currentState.get() == State.RUNNING) {
+            //         try {
+            //             sendPacket(socket, GenerateMessage.generateStatusMessage(status), mcpAddress, mcpPort);
+            //             System.out.println("Current Status: " + status);
+            //         } catch (IOException e) {
+            //             e.printStackTrace();
+            //         }
+            //     }
+            // }, 0, 2, TimeUnit.SECONDS);
 
-            while (currentState.get() != State.QUIT) {
+            while (currentState != State.QUIT) {
                 receivePacket = receivePacket(socket);
                 receivedMessage = new String(receivePacket.getData(), 0, receivePacket.getLength());
 
                 System.out.println("Received message: " + receivedMessage);
 
-                if (currentState.get() == State.INITIALISING && receivedMessage.contains("(INIT) from ESP")) {
+                if (currentState == State.INITIALISING && receivedMessage.contains("(INIT) from ESP")) {
 
                     // Get ESP IP and Port and then send back an INIT acknowledgement
                     espAddress = receivePacket.getAddress();
@@ -76,10 +85,10 @@ public class Server {
                     String akinMessage = new String(akinPacket.getData(), 0, akinPacket.getLength());
                     if (akinMessage.contains("AKIN")) {
                         status = "STOPC"; // Default state. not good though because doors could be open
-                        currentState.set(State.RUNNING);
+                        currentState = State.RUNNING;
                     }
 
-                } else if (currentState.get() == State.RUNNING) {
+                } else if (currentState == State.RUNNING) {
 
                     // Determine whether its a message from ESP or MCP
                     if (receivePacket.getPort() == mcpPort && receivedMessage.contains("EXEC")) {
@@ -105,18 +114,17 @@ public class Server {
                         // and when MCP forces a STAT update it will ask.
                     }
 
-                } else if (currentState.get() == State.STOPPED) {
+                } else if (currentState == State.STOPPED) {
 
                 }
             }
 
-        } catch (Exception e) {
+        } catch (IOException e) {
             e.printStackTrace();
         } finally {
-            if (socketRef.get() != null) {
-                socketRef.get().close();
+            if (socket != null) {
+                socket.close();
             }
-            scheduler.shutdown();
         }
     }
 
@@ -135,22 +143,15 @@ public class Server {
     }
 
     private static String handleMcpCommand(String command) {
-        switch (command) {
-            case "STOPC":
-                return "STOPC";
-            case "STOPO":
-                return "STOPO";
-            case "FSLOWC":
-                return "FSLOWC";
-            case "FFASTC":
-                return "FFASTC";
-            case "RSLOWC":
-                return "RSLOWC";
-            case "DISCONNECT":
-                return "DISCONNECT";
-            default:
-                return "Unknown command";
-        }
+        return switch (command) {
+            case "STOPC" -> "STOPC";
+            case "STOPO" -> "STOPO";
+            case "FSLOWC" -> "FSLOWC";
+            case "FFASTC" -> "FFASTC";
+            case "RSLOWC" -> "RSLOWC";
+            case "DISCONNECT" -> "DISCONNECT";
+            default -> "Unknown command";
+        };
     }
 
     // Function extracts "STOPC" for example out of the JSON string

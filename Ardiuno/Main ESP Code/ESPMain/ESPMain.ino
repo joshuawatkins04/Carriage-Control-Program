@@ -84,7 +84,7 @@ void loop() {
   while (state == 1) {
     receive_message();
 
-        send_message("STOPC", javaServerIP, javaServerPort);
+    send_message("STOPC", javaServerIP, javaServerPort);
     delay(1000);
 
     receive_message();
@@ -102,17 +102,9 @@ void loop() {
       send_message("Acting on RSLOWC", javaServerIP, javaServerPort);
     } else if (strcmp(incomingPacket, "DISCONNECT") == 0) {
       send_message("Acting on DISCONNECT", javaServerIP, javaServerPort);
-    }
-
-    delay(2000);
-
-    if (incomingPacket == "QUIT") {
       state = 2;
       break;
-    } 
-    else if (incomingPacket == "STOP") stop_br();
-    else if (incomingPacket == "SLOW") slow_br();
-    else if (incomingPacket == "FAST") fast_br();
+    }
     
     // Check if needs to open doors only when stopped
     if (move_state == 0) {
