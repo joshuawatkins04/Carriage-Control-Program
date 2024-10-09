@@ -13,6 +13,7 @@ public class PacketManager {
 
     public PacketManager(int port) throws IOException {
         socket = new DatagramSocket(port);
+        socket.setSoTimeout(5000);
     }
 
     public DatagramPacket receivePacket() throws IOException {

@@ -59,17 +59,17 @@ void loop() {
     Serial.printf("Java server responded: %s\n", incomingPacket);
 
     if (strcmp(incomingPacket, "STOPC") == 0) {
-      send_message("Acting on STOPC", javaServerIP, javaServerPort);
+      send_message("STOPC", javaServerIP, javaServerPort);
     } else if (strcmp(incomingPacket, "STOPO") == 0) {
-      send_message("Acting on STOPO", javaServerIP, javaServerPort);
+      send_message("STOPO", javaServerIP, javaServerPort);
     } else if (strcmp(incomingPacket, "FSLOWC") == 0) {
-      send_message("Acting on FSLOWC", javaServerIP, javaServerPort);
+      send_message("STOPC", javaServerIP, javaServerPort);
     } else if (strcmp(incomingPacket, "FFASTC") == 0) {
-      send_message("Acting on FFASTC", javaServerIP, javaServerPort);
+      send_message("FFASTC", javaServerIP, javaServerPort);
     } else if (strcmp(incomingPacket, "RSLOWC") == 0) {
-      send_message("Acting on RSLOWC", javaServerIP, javaServerPort);
+      send_message("STOPC", javaServerIP, javaServerPort);
     } else if (strcmp(incomingPacket, "DISCONNECT") == 0) {
-      send_message("Acting on DISCONNECT", javaServerIP, javaServerPort);
+      send_message("OFLN", javaServerIP, javaServerPort);
     }
 
     delay(2000);
