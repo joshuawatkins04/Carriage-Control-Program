@@ -2,6 +2,13 @@
   "configurations": [
     {
       "type": "java",
+      "name": "TESTServerMCP",
+      "request": "launch",
+      "mainClass": "ccp.TESTServerMCP",
+      "projectName": "ccp"
+    },
+    {
+      "type": "java",
       "name": "ServerMCP",
       "request": "launch",
       "mainClass": "ccp.ServerMCP",

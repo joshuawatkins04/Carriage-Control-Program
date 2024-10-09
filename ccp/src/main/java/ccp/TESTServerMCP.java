@@ -10,7 +10,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 public class TESTServerMCP {
 
     private static final int bufferSize = 1024;
-    private static final String ccpAddr = "192.168.0.37";
+    // private static final String ccpAddr = "192.168.0.37";
     private static final int ccpPort = 4210;
     private static final int mcpPort = 4000;
     private static DatagramSocket socket;
@@ -18,7 +18,8 @@ public class TESTServerMCP {
     private static ObjectMapper objectMapper = new ObjectMapper();
 
     public static void main(String[] args) {
-        DatagramSocket socket = null;
+        
+        // DatagramSocket socket = null;
 
         System.out.print("\033[H\033[2J");
         System.out.flush();
@@ -26,7 +27,8 @@ public class TESTServerMCP {
         try {
             // Initialize the socket and server address
             socket = new DatagramSocket(mcpPort);
-            ccpAddress = InetAddress.getByName(ccpAddr);
+            // ccpAddress = InetAddress.getByName(ccpAddr);
+            ccpAddress = InetAddress.getByName("localhost");
 
             // Test Case 1: Send a valid command "CCIN" and expect "AKIN" as a response
             String command = "CCIN";

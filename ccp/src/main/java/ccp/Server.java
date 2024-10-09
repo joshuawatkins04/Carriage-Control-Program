@@ -2,59 +2,53 @@ package ccp;
 
 import java.io.IOException;
 import java.net.DatagramPacket;
-import java.net.DatagramSocket;
 import java.net.InetAddress;
-import java.net.UnknownHostException;
-import java.util.HashSet;
 import java.util.Set;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 public class Server {
 
-    private static final int ccpPort = 4210, mcpPort = 4000;
-    private static final int bufferSize = 1024;
-    private static DatagramPacket receivePacket, responsePacket;
-    private static DatagramSocket socket;
     private static InetAddress espAddress, mcpAddress;
-    private static String receivedMessage, status, sendToEsp;
-    private static int espPort;
-    private static Set<String> espCommands;
-    private static State currentState;
+    private static String status;
+    private static int ccpPort, mcpPort, espPort;
+    private final PacketManager packetManager;
+    private final Set<String> espCommands;
+    private State currentState;
 
-    private enum State {
-        INITIALISING,
-        RUNNING,
-        QUIT
+    public Server(int port) throws IOException {
+        packetManager = new PacketManager(port);
+        currentState = State.INITIALISING;
+        mcpAddress = InetAddress.getByName("192.168.0.103");
+        ccpPort = 4210;
+        mcpPort = 4000;
+        status = "ERR";
+        espCommands = Set.of("STOPC", "STOPO", "FFASTC", "OFLN");
     }
 
-    public static void main(String[] args) throws UnknownHostException {
+    public static void main(String[] args) {
+        try {
+            Server server = new Server(ccpPort);
+            server.start();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
 
-        mcpAddress = InetAddress.getByName("192.168.0.103");
-        currentState = State.INITIALISING;
-        status = "ERR";
-        socket = null;
-        espCommands = new HashSet<>();
-
-        espCommands.add("STOPC");
-        espCommands.add("STOPO");
-        espCommands.add("FFASTC");
-        espCommands.add("OFLN");
-
+    public void start() {
+        
         System.out.print("\033[H\033[2J");
         System.out.flush();
-
+        
         try {
-            socket = new DatagramSocket(ccpPort);
             System.out.println("Server listening on port: " + ccpPort);
 
             /* Main Server loop */
             while (currentState != State.QUIT) {
 
-                // Main loop that waits for a packet to be received, then acts according based
-                // on the info
-                receivePacket = receivePacket(socket);
-                receivedMessage = new String(receivePacket.getData(), 0, receivePacket.getLength());
+                DatagramPacket receivePacket = packetManager.receivePacket();
+                String receivedMessage = new String(receivePacket.getData(), 0, receivePacket.getLength());
 
                 System.out.println("Received message: " + receivedMessage);
 
@@ -63,8 +57,6 @@ public class Server {
                  * and then sending Initiation message to MCP and then waiting for a
                  * AKIN response from MCP before entering RUNNING state
                  */
-                // if (currentState == State.INITIALISING && receivedMessage.contains("(INIT)
-                // from ESP")) {
                 switch (currentState) {
                     case INITIALISING:
                         if (receivedMessage.contains("(INIT) from ESP")) {
@@ -72,12 +64,12 @@ public class Server {
                             espAddress = receivePacket.getAddress();
                             espPort = receivePacket.getPort();
                             System.out.println("Initialization message received from ESP32.");
-                            sendPacket(socket, "(INIT Confirmed) from CCP", espAddress, espPort);
+                            packetManager.sendPacket("(INIT Confirmed) from CCP", espAddress, espPort);
                             System.out.println("Sent initialization confirmation to ESP32.");
 
                             // Now tell MCP this information and then wait for the AKIN packet from MCP
-                            sendPacket(socket, GenerateMessage.generateInitiationMessage(), mcpAddress, mcpPort);
-                            DatagramPacket mcpPacketACK = receivePacket(socket);
+                            packetManager.sendPacket(GenerateMessage.generateInitiationMessage(), mcpAddress, mcpPort);
+                            DatagramPacket mcpPacketACK = packetManager.receivePacket();
                             String akinMessage = new String(mcpPacketACK.getData(), 0, mcpPacketACK.getLength());
                             if (akinMessage.contains("AKIN")) {
                                 status = "STOPC"; // Default state. not good though because doors could be open
@@ -86,15 +78,14 @@ public class Server {
 
                         }
 
-                        /*
-                         * Running state - Main loop that will check for several commands from MCP and
-                         * some packets from ESP.
-                         */
-                        // else if (currentState == State.RUNNING) {
+                    /*
+                     * Running state - Main loop that will check for several commands from MCP and
+                     * some packets from ESP.
+                     */
                     case RUNNING:
                         // Check if MCP is requesting STAT message
                         if (receivedMessage.contains("STRQ")) {
-                            sendPacket(socket, GenerateMessage.generateStatusMessage(status), mcpAddress, mcpPort);
+                            packetManager.sendPacket(GenerateMessage.generateStatusMessage(status), mcpAddress, mcpPort);
                         }
 
                         /*
@@ -104,9 +95,8 @@ public class Server {
                          * - Send back an ACK to MCP
                          */
                         if (receivedMessage.contains("EXEC")) {
-
                             // AKEK that initial packet was received
-                            sendPacket(socket, GenerateMessage.generateAckMessage(), mcpAddress, mcpPort);
+                            packetManager.sendPacket(GenerateMessage.generateAckMessage(), mcpAddress, mcpPort);
 
                             // Pull a part message and then send it to ESP based on the several commands
                             String actionString = extractAction(receivedMessage); // This is not tested so could be
@@ -117,15 +107,15 @@ public class Server {
                                 currentState = State.QUIT;
                             }
                             // sendToEsp = handleMcpCommand(actionString);
-                            sendPacket(socket, actionString, espAddress, espPort);
+                            packetManager.sendPacket(actionString, espAddress, espPort);
                             System.out.println("Sent response: " + actionString);
 
                             // Wait for a response from ESP to say that it has executed said command
-                            DatagramPacket espPacketACK = receivePacket(socket);
+                            DatagramPacket espPacketACK = packetManager.receivePacket();
                             String ackMessage = new String(espPacketACK.getData(), 0, espPacketACK.getLength());
                             for (String s : espCommands) {
                                 if (ackMessage.contains(s)) {
-                                    sendPacket(socket, GenerateMessage.generateStatusMessage(s), mcpAddress, mcpPort);
+                                    packetManager.sendPacket(GenerateMessage.generateStatusMessage(s), mcpAddress, mcpPort);
                                     break;
                                 }
                             }
@@ -142,7 +132,7 @@ public class Server {
                             // Update status message to MCP
                             if (receivedMessage.contains("EMERGENCY STOP")) {
                                 status = "STOPC";
-                                sendPacket(socket, GenerateMessage.generateStatusMessage(status), mcpAddress, mcpPort);
+                                packetManager.sendPacket(GenerateMessage.generateStatusMessage(status), mcpAddress, mcpPort);
                             }
                         }
                     default:
@@ -153,24 +143,14 @@ public class Server {
         } catch (IOException e) {
             e.printStackTrace();
         } finally {
-            if (socket != null) {
-                socket.close();
-            }
+            packetManager.close();
         }
     }
 
-    private static DatagramPacket receivePacket(DatagramSocket socket) throws IOException {
-        byte[] receiveBuffer = new byte[bufferSize];
-        receivePacket = new DatagramPacket(receiveBuffer, receiveBuffer.length);
-        socket.receive(receivePacket);
-        return receivePacket;
-    }
-
-    private static void sendPacket(DatagramSocket socket, String message, InetAddress address, int port)
-            throws IOException {
-        byte[] responseBuffer = message.getBytes();
-        responsePacket = new DatagramPacket(responseBuffer, responseBuffer.length, address, port);
-        socket.send(responsePacket);
+    private enum State {
+        INITIALISING,
+        RUNNING,
+        QUIT
     }
 
     private static String extractAction(String message) {
@@ -178,49 +158,9 @@ public class Server {
         try {
             GetMessageInfo info = objectMapper.readValue(message, GetMessageInfo.class);
             return info.getAction();
-        } catch (Exception e) {
+        } catch (JsonProcessingException e) {
             e.printStackTrace();
             return "Error with finding action";
         }
     }
-
-    // private static String handleMcpCommand(String command) {
-    // return switch (command) {
-    // case "STOPC" -> "STOPC";
-    // case "STOPO" -> "STOPO";
-    // case "FSLOWC" -> "FSLOWC";
-    // case "FFASTC" -> "FFASTC";
-    // case "RSLOWC" -> "RSLOWC";
-    // case "DISCONNECT" -> "DISCONNECT";
-    // default -> "Unknown command";
-    // };
-    // }
-
-    // private static void handleMcpJson(String mcpMessage) {
-    // ObjectMapper objectMapper = new ObjectMapper();
-    // try {
-    // GetMessageInfo info = objectMapper.readValue(mcpMessage,
-    // GetMessageInfo.class);
-    // String message = info.getMessage();
-    // String action = info.getAction();
-    // } catch (IOException e) {
-    // e.printStackTrace();
-    // }
-    // }
-
-    // Function extracts "STOPC" for example out of the JSON string
-    // Will fix so it uses JSON Object mapper
-    // static String extractAction(String message) {
-    // String extractAfter = "action:";
-    // if (message.contains(extractAfter)) {
-    // String[] parts = message.split(extractAfter);
-    // if (parts.length > 1) {
-    // String remainder = parts[1].trim();
-    // int endIndex = remainder.indexOf(",");
-    // if (endIndex != -1) return remainder.substring(0, endIndex).trim();
-    // else return remainder.replace("}", "").trim();
-    // }
-    // }
-    // return "";
-    // }
 }
