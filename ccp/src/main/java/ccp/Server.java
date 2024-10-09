@@ -37,10 +37,10 @@ public class Server {
     }
 
     public void start() {
-        
+
         System.out.print("\033[H\033[2J");
         System.out.flush();
-        
+
         try {
             System.out.println("Server listening on port: " + ccpPort);
 
@@ -52,91 +52,13 @@ public class Server {
 
                 System.out.println("Received message: " + receivedMessage);
 
-                /*
-                 * Initialising state - Will wait for a packet from ESP containing INIT
-                 * and then sending Initiation message to MCP and then waiting for a
-                 * AKIN response from MCP before entering RUNNING state
-                 */
                 switch (currentState) {
-                    case INITIALISING:
-                        if (receivedMessage.contains("(INIT) from ESP")) {
-                            // Get ESP IP and Port and then send back an INIT acknowledgement
-                            espAddress = receivePacket.getAddress();
-                            espPort = receivePacket.getPort();
-                            System.out.println("Initialization message received from ESP32.");
-                            packetManager.sendPacket("(INIT Confirmed) from CCP", espAddress, espPort);
-                            System.out.println("Sent initialization confirmation to ESP32.");
-
-                            // Now tell MCP this information and then wait for the AKIN packet from MCP
-                            packetManager.sendPacket(GenerateMessage.generateInitiationMessage(), mcpAddress, mcpPort);
-                            DatagramPacket mcpPacketACK = packetManager.receivePacket();
-                            String akinMessage = new String(mcpPacketACK.getData(), 0, mcpPacketACK.getLength());
-                            if (akinMessage.contains("AKIN")) {
-                                status = "STOPC"; // Default state. not good though because doors could be open
-                                currentState = State.RUNNING;
-                            }
-
-                        }
-
-                    /*
-                     * Running state - Main loop that will check for several commands from MCP and
-                     * some packets from ESP.
-                     */
-                    case RUNNING:
-                        // Check if MCP is requesting STAT message
-                        if (receivedMessage.contains("STRQ")) {
-                            packetManager.sendPacket(GenerateMessage.generateStatusMessage(status), mcpAddress, mcpPort);
-                        }
-
-                        /*
-                         * If from MCP and it has any of the commands do following:
-                         * - Send the command packet to ESP
-                         * - Wait for ACK from ESP that it has executed that command
-                         * - Send back an ACK to MCP
-                         */
-                        if (receivedMessage.contains("EXEC")) {
-                            // AKEK that initial packet was received
-                            packetManager.sendPacket(GenerateMessage.generateAckMessage(), mcpAddress, mcpPort);
-
-                            // Pull a part message and then send it to ESP based on the several commands
-                            String actionString = extractAction(receivedMessage); // This is not tested so could be
-                                                                                  // wrong
-
-                            // Handle disconnect message
-                            if (actionString.contains("DISCONNECT")) {
-                                currentState = State.QUIT;
-                            }
-                            // sendToEsp = handleMcpCommand(actionString);
-                            packetManager.sendPacket(actionString, espAddress, espPort);
-                            System.out.println("Sent response: " + actionString);
-
-                            // Wait for a response from ESP to say that it has executed said command
-                            DatagramPacket espPacketACK = packetManager.receivePacket();
-                            String ackMessage = new String(espPacketACK.getData(), 0, espPacketACK.getLength());
-                            for (String s : espCommands) {
-                                if (ackMessage.contains(s)) {
-                                    packetManager.sendPacket(GenerateMessage.generateStatusMessage(s), mcpAddress, mcpPort);
-                                    break;
-                                }
-                            }
-                        }
-                        /*
-                         * The ESP will only ever need to send a message directly to CCP when it changes
-                         * status
-                         * for an unexpected reason such as a case where it has to emergency stop and
-                         * its status changes
-                         */
-                        else if (receivePacket.getPort() == espPort) {
-                            // Maybe include something to handle ESP sending a "Emergency Stop" command
-                            // maybe?
-                            // Update status message to MCP
-                            if (receivedMessage.contains("EMERGENCY STOP")) {
-                                status = "STOPC";
-                                packetManager.sendPacket(GenerateMessage.generateStatusMessage(status), mcpAddress, mcpPort);
-                            }
-                        }
-                    default:
-                        break;
+                    case INITIALISING ->
+                        handleInitialisingState(receivedMessage, receivePacket);
+                    case RUNNING ->
+                        handleRunningState(receivedMessage, receivePacket);
+                    default ->
+                        System.out.println("Tried to go into Unknown State");
                 }
             }
 
@@ -151,6 +73,87 @@ public class Server {
         INITIALISING,
         RUNNING,
         QUIT
+    }
+
+    /*
+     * Initialising state - Will wait for a packet from ESP containing INIT
+     * and then sending Initiation message to MCP and then waiting for a
+     * AKIN response from MCP before entering RUNNING state
+     */
+    private void handleInitialisingState(String message, DatagramPacket packet) throws IOException {
+        if (message.contains("(INIT) from ESP")) {
+            // Get ESP IP and Port and then send back an INIT acknowledgement
+            espAddress = packet.getAddress();
+            espPort = packet.getPort();
+            System.out.println("Initialization message received from ESP32.");
+            packetManager.sendPacket("(INIT Confirmed) from CCP", espAddress, espPort);
+            System.out.println("Sent initialization confirmation to ESP32.");
+
+            // Now tell MCP this information and then wait for the AKIN packet from MCP
+            packetManager.sendPacket(GenerateMessage.generateInitiationMessage(), mcpAddress, mcpPort);
+            DatagramPacket mcpPacketACK = packetManager.receivePacket();
+            String akinMessage = new String(mcpPacketACK.getData(), 0, mcpPacketACK.getLength());
+            if (akinMessage.contains("AKIN")) {
+                status = "STOPC"; // Default state. not good though because doors could be open
+                currentState = State.RUNNING;
+            }
+        }
+    }
+
+    /*
+     * Running state - Main loop that will check for several commands from MCP and
+     * some packets from ESP.
+     */
+    private void handleRunningState(String message, DatagramPacket packet) throws IOException {
+        // Check if MCP is requesting STAT message
+        if (message.contains("STRQ")) {
+            packetManager.sendPacket(GenerateMessage.generateStatusMessage(status), mcpAddress, mcpPort);
+        } else if (message.contains("EXEC")) {
+            handleExecuteCommand(message);
+        } /*
+         * The ESP will only ever need to send a message directly to CCP when it changes status
+         * for an unexpected reason such as a case where it has to emergency stop and its status changes
+         */ else if (packet.getPort() == espPort) {
+            // Maybe include something to handle ESP sending a "Emergency Stop" command
+            // maybe?
+            // Update status message to MCP
+            if (message.contains("EMERGENCY STOP")) {
+                status = "STOPC";
+                packetManager.sendPacket(GenerateMessage.generateStatusMessage(status), mcpAddress, mcpPort);
+            }
+        }
+    }
+
+    /*
+     * If from MCP and it has any of the commands do following:
+     * - Send the command packet to ESP
+     * - Wait for ACK from ESP that it has executed that command
+     * - Send back an ACK to MCP
+     */
+    private void handleExecuteCommand(String message) throws IOException {
+        // AKEK that initial packet was received
+        packetManager.sendPacket(GenerateMessage.generateAckMessage(), mcpAddress, mcpPort);
+
+        // Pull a part message and then send it to ESP based on the several commands
+        String actionString = extractAction(message); // This is not tested so could be wrong
+
+        // Handle disconnect message
+        if (actionString.contains("DISCONNECT")) {
+            currentState = State.QUIT;
+        } else {
+            // sendToEsp = handleMcpCommand(actionString);
+            packetManager.sendPacket(actionString, espAddress, espPort);
+            System.out.println("Sent response: " + actionString);
+
+            // Wait for a response from ESP to say that it has executed said command
+            DatagramPacket espPacketACK = packetManager.receivePacket();
+            String ackMessage = new String(espPacketACK.getData(), 0, espPacketACK.getLength());
+            for (String s : espCommands) {
+                if (ackMessage.contains(s)) {
+                    packetManager.sendPacket(GenerateMessage.generateStatusMessage(s), mcpAddress, mcpPort);
+                }
+            }
+        }
     }
 
     private static String extractAction(String message) {
