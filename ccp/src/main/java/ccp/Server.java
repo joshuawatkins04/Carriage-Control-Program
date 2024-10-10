@@ -11,11 +11,13 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 
 public class Server {
 
+    private static final String initExpectedResponse = "XXinitXX";
+    private static final String execExpectedResponse = "XXexecXX";
     private static InetAddress espAddress, mcpAddress;
     private static String status;
     private static int mcpPort, espPort;
     private static PacketManager packetManager;
-    private final Set<String> expectedEspCommands;
+    private final Set<String> espCommands;
     private State currentState;
 
     public static int ccpPort = 4210;
@@ -26,7 +28,7 @@ public class Server {
         mcpAddress = InetAddress.getByName("192.168.0.103");
         mcpPort = 4000;
         status = "ERR";
-        expectedEspCommands = Set.of("STOPC", "STOPO", "FFASTC", "OFLN");
+        espCommands = Set.of("STOPC", "STOPO", "FFASTC", "OFLN");
     }
 
     public static void main(String[] args) {
@@ -34,7 +36,7 @@ public class Server {
             Server server = new Server(ccpPort);
             server.start();
         } catch (IOException e) {
-            e.printStackTrace();
+            System.out.println("[SERVER] MAJOR ERROR: Server failed to start");
         }
     }
 
@@ -44,18 +46,17 @@ public class Server {
         System.out.flush();
 
         try {
-            System.out.println("Server listening on port: " + ccpPort);
+            System.out.println("[SERVER] Listening on port: " + ccpPort);
 
-            /* Main Server loop */
             while (currentState != State.QUIT) {
                 try {
                     DatagramPacket receivePacket = packetManager.receivePacket();
                     String receivedMessage = new String(receivePacket.getData(), 0, receivePacket.getLength());
 
                     if (receivePacket.getPort() == 4000) {
-                        System.out.println("MCP said: " + receivedMessage);
+                        System.out.println("[SERVER] Received MCP message: " + receivedMessage);
                     } else {
-                        System.out.println("ESP said: " + receivedMessage);
+                        System.out.println("[SERVER] Received ESP message: " + receivedMessage);
                     }
 
                     switch (currentState) {
@@ -64,10 +65,10 @@ public class Server {
                         case RUNNING ->
                             handleRunningState(receivedMessage, receivePacket);
                         default ->
-                            System.out.println("Tried to go into Unknown State");
+                            System.out.println("[SERVER] ERROR: Tried to go into Unknown State");
                     }
                 } catch (SocketTimeoutException e) {
-                    System.out.println("No packet received");
+                    System.out.println("[SERVER] ERROR: SocketTimeoutException, No packet received");
                 }
             }
         } catch (IOException e) {
@@ -90,22 +91,24 @@ public class Server {
      * AKIN response from MCP before entering RUNNING state
      */
     private synchronized void handleInitialisingState(String message, DatagramPacket packet) throws IOException {
-        if (message.contains("(INIT) from ESP")) {
-            String akinMessage = "";
-            // Get ESP IP and Port and then send back an INIT acknowledgement
+        if (message.contains("EXEC_INIT")) {
             espAddress = packet.getAddress();
             espPort = packet.getPort();
-            System.out.println("Initialization message received from ESP32.");
+            System.out.println("[SERVER] Received INIT from ESP32.");
 
-            packetManager.sendPacket("(INIT Confirmed) from CCP", espAddress, espPort); // Doesnt need another ACK
-            System.out.println("Sent initialization confirmation to ESP32.");
+            String espAckWithStat = attemptSendPacket("INIT_CONF", espAddress, espPort, initExpectedResponse, 10);
 
-            // Now tell MCP this information and then wait for the AKIN packet from MCP
-            akinMessage = sendWithRetries(GenerateMessage.generateInitiationMessage(), mcpAddress, mcpPort);
+            if (!espAckWithStat.isEmpty()) {
+                String akinMessage = attemptSendPacket(GenerateMessage.generateInitiationMessage(), mcpAddress, mcpPort,
+                        "AKIN", 10);
 
-            if (!akinMessage.isEmpty() && akinMessage.contains("AKIN")) {
-                status = "STOPC"; // FIX
-                currentState = State.RUNNING;
+                if (!akinMessage.isEmpty()) {
+                    status = espAckWithStat;
+                    currentState = State.RUNNING;
+                    System.out.println("\n[SERVER] SUCCES: Moving into RUNNING state\n");
+                } else {
+                    System.out.println("[SERVER] ERROR: FAILED INITIALISATION");
+                }
             }
         }
     }
@@ -116,14 +119,23 @@ public class Server {
      */
     private synchronized void handleRunningState(String message, DatagramPacket packet) throws IOException {
         if (message.contains("STRQ")) {
-            String m = GenerateMessage.generateStatusMessage(status);
-            packetManager.sendPacket(m, mcpAddress, mcpPort);
-            System.out.println("Sent response: " + m);
+            String stat = GenerateMessage.generateStatusMessage(status);
+            String mcpACKST = attemptSendPacket(stat, mcpAddress, mcpPort, "AKST", 10);
+
+            if (!mcpACKST.isEmpty()) {
+                System.out.println("[SERVER] Received AKST from MCP");
+            } else {
+                System.out.println("[SERVER] ERROR: Failed to receive AKST from MCP");
+            }
         } else if (message.contains("EXEC")) {
             handleExecuteCommand(message);
-        } else if (packet.getAddress().equals(espAddress) && packet.getPort() == espPort) {
+        } else if (packet.getPort() == espPort && packet.getAddress().equals(espAddress)) {
             if (message.contains("EMERGENCY STOP")) {
-                status = "STOPC";
+                if (message.contains("STOPC")) {
+                    status = "STOPC";
+                } else if (message.contains("STOPO")) {
+                    status = "STOPO";
+                }
                 packetManager.sendPacket(GenerateMessage.generateStatusMessage(status), mcpAddress, mcpPort);
             }
         }
@@ -136,104 +148,61 @@ public class Server {
      * - Send back an ACK to MCP
      */
     private synchronized void handleExecuteCommand(String message) throws IOException {
-        // AKEK that initial packet was received
         packetManager.sendPacket(GenerateMessage.generateAckMessage(), mcpAddress, mcpPort);
 
-        // Pull a part message and then send it to ESP based on the several commands
-        String actionString = extractAction(message); // This is not tested so could be wrong
-        int retryCount = 0;
-        int maxCount = 10;
-        boolean received = false;
+        String actionString = extractAction(message);
+        String espResponse = attemptSendPacket(actionString, espAddress, espPort, execExpectedResponse, 10);
 
-        while (!received && retryCount < maxCount) {
-            packetManager.sendPacket(actionString, espAddress, espPort);
-            System.out.println("Sent response to ESP: " + actionString);
-
-            // Wait for a response from ESP to say that it has executed said command
-            // DatagramPacket espPacketACK = packetManager.receivePacket();
-            // String ackMessage = validatePacket(espPacketACK, espAddress);
-            String espPacketAck = validatePacket(espAddress);
-
-            // String ackMessage = new String(espPacketACK.getData(), 0,
-            // espPacketACK.getLength());
-            if (!espPacketAck.isEmpty()) {
-                received = true;
-                System.out.println("ESP SAID: " + espPacketAck);
-                if (espPacketAck.contains("OFLN")) {
-                    packetManager.sendPacket("OFLN", mcpAddress, mcpPort);
-                    currentState = State.QUIT;
-                } else {
-                    for (String s : expectedEspCommands) {
-                        if (espPacketAck.contains(s)) {
-                            String statUpdate = GenerateMessage.generateStatusMessage(s);
-                            packetManager.sendPacket(statUpdate, mcpAddress, mcpPort);
-                            System.out.println("Sent ACK response of new status to MCP: " + s);
-                        }
+        if (!espResponse.isEmpty()) {
+            if (espResponse.contains("OFLN")) {
+                packetManager.sendPacket("OFLN", mcpAddress, mcpPort);
+                currentState = State.QUIT;
+            } else {
+                System.out.println("[SERVER] Received ESP AKIN packet containing updated status: " + espResponse);
+                for (String s : espCommands) {
+                    if (espResponse.contains(s)) {
+                        String statUpdate = GenerateMessage.generateStatusMessage(s);
+                        packetManager.sendPacket(statUpdate, mcpAddress, mcpPort); // STAT doesnt need ACK
+                        System.out.println("[SERVER] Sent ACK response of new status to MCP. Status: " + s);
+                        break;
                     }
                 }
-            } else {
-                retryCount++;
-                System.out.println("espPacketAck not found, trying again");
             }
-
-            try {
-                Thread.sleep(500);
-            } catch (InterruptedException e) {
-                Thread.currentThread().interrupt();
-                break;
-            }
-        }
-
-        if (!received) {
-            System.out.println("Failed... retrying");
         }
     }
 
-    private String validatePacket(InetAddress expectedAddress) throws IOException {
+    private String attemptSendPacket(String message, InetAddress address, int port, String expectedResponse,
+            int maxCount) throws IOException {
         int retryCount = 0;
-        int maxCount = 10;
-
-        while (retryCount < maxCount) {
-            try {
-                DatagramPacket packet = packetManager.receivePacket();
-                if (packet.getAddress().equals(expectedAddress)) {
-                    return new String(packet.getData(), 0, packet.getLength());
-                }
-            } catch (SocketTimeoutException e) {
-                System.out.println("No packet received");
-            }
-            retryCount++;
-
-            try {
-                Thread.sleep(500);
-            } catch (InterruptedException e) {
-                Thread.currentThread().interrupt();
-                break;
-            }
-        }
-        return "";
-    }
-
-    private String sendWithRetries(String message, InetAddress address, int port) throws IOException {
-        int retryCount = 0;
-        int maxCount = 5;
         boolean received = false;
         String response = "";
 
         while (!received && retryCount < maxCount) {
             packetManager.sendPacket(message, address, port);
-            System.out.println("Sent message: " + message + " to " + address.getHostAddress() + " on port " + port);
+            System.out.println("[Count: " + retryCount + " ] Send attempt for " + address + " with packet " + message);
 
             try {
                 DatagramPacket packet = packetManager.receivePacket();
-                if (packet.getAddress().equals(address)) {
-                    response = new String(packet.getData(), 0, packet.getLength());
-                    received = true;
+                if (packet != null && packet.getAddress().equals(address)) {
+                    if (expectedResponse.equals("XXexecXX")) {
+                        response = new String(packet.getData(), 0, packet.getLength());
+                        received = true;
+                    } else {
+                        response = new String(packet.getData(), 0, packet.getLength());
+                        if (expectedResponse.equals("XXinitXX")) {
+                            for (String s : espCommands) {
+                                if (response.equals(s)) {
+                                    received = true;
+                                }
+                            }
+                        } else if (response.contains(expectedResponse)) {
+                            received = true;
+                        }
+                    }
                 }
             } catch (SocketTimeoutException e) {
-                System.out.println("Timed out");
+                System.out.println("[SERVER] ERROR: SocketTimeoutException No packet received");
             }
-
             retryCount++;
             try {
                 Thread.sleep(500);
@@ -242,14 +211,13 @@ public class Server {
                 break;
             }
         }
-
         if (!received) {
-            System.out.println("Failed to receive response");
+            System.out.println("[SERVER] ERROR: Response not received after " + retryCount + " tries");
         }
 
         return response;
     }
-
+    
     private static String extractAction(String message) {
         ObjectMapper objectMapper = new ObjectMapper();
         try {
