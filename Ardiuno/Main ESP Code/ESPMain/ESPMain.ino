@@ -111,9 +111,9 @@ void loop()
     delayMicroseconds(10);
     digitalWrite(trigger, LOW);
     duration = pulseIn(echo, HIGH);
-    distance = (duration / 2) / 29.1;
+    distance = (((duration / 2) / 29.1) * 10);
 
-    if (distance < 10 && distance > 0)
+    if (distance < 100 && distance > 0)
     {
       stop_br();
       close_door();
