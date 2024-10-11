@@ -32,7 +32,7 @@ public class GenerateMessage {
         return convertToJson(message);
     }
 
-    private static synchronized int incrementSequenceNumber() {
+    private static int incrementSequenceNumber() {
         return sequenceNumber++;
     }
 

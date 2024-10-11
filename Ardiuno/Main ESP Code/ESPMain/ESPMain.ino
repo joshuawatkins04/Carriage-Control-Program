@@ -21,14 +21,10 @@ char incomingPacket[255];               // Buffer for incoming packets
 IPAddress javaServerIP(192, 168, 0, 37);
 unsigned int javaServerPort = 4210;
 
-char door_status[10] = "CLOSED";
-char move_status[10] = "STOPPED";
-
 int state;
-int current_speed;
-int door_state;
-int move_state;
-int sensor_status;
+int currentSpeed;
+int doorState;
+int sensorStatus;
 int safeDisconnect;
 
 void setup()
@@ -37,9 +33,8 @@ void setup()
   Serial.println();
 
   state = 0;
-  current_speed = 0;
-  door_state = 0;
-  move_state = 0;
+  currentSpeed = 0;
+  doorState = 0;
   safeDisconnect = 0;
 
   // Connect to Wi-Fi
@@ -79,14 +74,13 @@ void loop()
   {
     Serial.println("Initialising connection with ESP and Java Server");
 
-    send_message("(INIT) from ESP", javaServerIP, javaServerPort);
+    sendMessage("(INIT) from ESP", javaServerIP, javaServerPort);
     delay(1000);
 
-    receive_message();
+    receiveMessage();
 
     if (strcmp(incomingPacket, "(INIT Confirmed) from CCP") == 0)
     {
-      // send_message("Initialising packet successful (FROM ESP32)", javaServerIP, javaServerPort);
       state = 1;
     }
   }
@@ -95,12 +89,12 @@ void loop()
   while (state == 1)
   {
 
-    receive_message();
+    receiveMessage();
 
-    send_message("STOPC", javaServerIP, javaServerPort);
+    sendMessage("STOPC", javaServerIP, javaServerPort);
     delay(1000);
 
-    receive_message();
+    receiveMessage();
     Serial.printf("Java server responded: %s\n", incomingPacket);
 
     detect();
@@ -113,28 +107,27 @@ void loop()
     duration = pulseIn(echo, HIGH);
     distance = (((duration / 2) / 29.1) * 10);
 
-    if (distance < 100 && distance > 0)
-    {
-      stop_br();
-      close_door();
-          send_message("STOPC", javaServerIP, javaServerPort); // read in the MCP document if we do emergency stop to send STOPC
+    if (distance < 100 && distance > 0) {
+      stopBr();
+      closeDoor();
+      sendMessage("STOPC", javaServerIP, javaServerPort); // read in the MCP document if we do emergency stop to send STOPC
     }
 
     // BR should stop and close doors
     if (strcmp(incomingPacket, "STOPC") == 0)
     {
-      stop_br();
-      close_door();
+      stopBr();
+      closeDoor();
       delay(1000); // Could be bad to have this delay but how do we know when it has
                    // completely stopped?
-      send_message("STOPC", javaServerIP, javaServerPort);
+      sendMessage("STOPC", javaServerIP, javaServerPort);
     }
     // BR shuold stop and open doors
     else if (strcmp(incomingPacket, "STOPO") == 0)
     {
-      stop_br();
-      open_door();
-      send_message("STOPO", javaServerIP, javaServerPort);
+      stopBr();
+      openDoor();
+      sendMessage("STOPO", javaServerIP, javaServerPort);
     }
     // BR should move forward slowly and stop
     // after it has aligned itself with the IR
@@ -144,24 +137,24 @@ void loop()
     // photodiode, the BR should not move.
     else if (strcmp(incomingPacket, "FSLOWC") == 0)
     {
-      slow_br();
+      slowBr();
       // do something with IR sensor to detect
       // once detected, stop
-      while(sensor_status < 700)
+      while(sensorStatus < 700)
       {
         // while loop used to block stop from excuting until the sensor reads the red LED
       }
-    stop_br();
-      send_message("STOPC", javaServerIP, javaServerPort);
+    stopBr();
+      sendMessage("STOPC", javaServerIP, javaServerPort);
     }
     // BR moving in forward direction at fast speed
     // and door is closed
     else if (strcmp(incomingPacket, "FFASTC") == 0)
     {
-      fast_br();
-      if (door_state == 1)
-        close_door();
-      send_message("FFASTC", javaServerIP, javaServerPort);
+      fastBr();
+      if (doorState == 1)
+        closeDoor();
+      sendMessage("FFASTC", javaServerIP, javaServerPort);
     }
     // BR move backwards slowly and stop after it
     // is aligned with IR photodiode at checkpoint
@@ -171,16 +164,16 @@ void loop()
     else if (strcmp(incomingPacket, "RSLOWC") == 0)
     {
       // need move backwards command
-      slowReverse_br();
+      slowReverseBr();
 
-      while(sensor_status < 700)
+      while(sensorStatus < 700)
       {
          // while loop used to block stop from excuting until the sensor reads the red LED
       }
-      stop_br();
+      stopBr();
       digitalWrite(motor_direction, HIGH);
       // Once has achieved moving slow and then stopped with doors closed, then send STOPC back
-      send_message("STOPC", javaServerIP, javaServerPort);
+      sendMessage("STOPC", javaServerIP, javaServerPort);
     }
     // BR status LED should flash at 2 HZ to
     // indicate that it is to be removed from track
@@ -210,14 +203,14 @@ void loop()
 }
 
 /* Wifi Code */
-void send_message(const char *str, IPAddress remoteIP, unsigned int remotePort)
+void sendMessage(const char *str, IPAddress remoteIP, unsigned int remotePort)
 {
   udp.beginPacket(remoteIP, remotePort);
   udp.write((uint8_t *)str, strlen(str));
   udp.endPacket();
   Serial.printf("Sent a UDP packet to %s, port %d\n", remoteIP.toString().c_str(), remotePort);
 }
-void receive_message()
+void receiveMessage()
 {
   int packetSize = udp.parsePacket();
   if (packetSize)
@@ -231,7 +224,7 @@ void receive_message()
     Serial.printf("UDP packet contents: %s\n", incomingPacket);
   }
 }
-char *get_status()
+char *getStatus()
 {
   // static char message[50];
   // snprintf(message, sizeof(message), "(STAT) Door: %s Moving: %s", door_status, move_status);
@@ -241,55 +234,51 @@ char *get_status()
 
 /* Motor Code */
 
-void slow_br()
+void slowBr()
 {
-  move_state = 1;
-  for (int i = current_speed; i >= 100; i -= 5)
+  for (int i = currentSpeed; i >= 100; i -= 5)
   { // slowdown
     analogWrite(motor_speed, i);
     delay(100);
   }
-  current_speed = 100;
+  currentSpeed = 100;
 }
-void stop_br()
+void stopBr()
 {
-  move_state = 0;
   analogWrite(motor_speed, 0);
-  current_speed = 0;
+  currentSpeed = 0;
 }
-void fast_br()
+void fastBr()
 {
-  move_state = 2;
-  for (int i = current_speed; i <= 255; i += 5)
+  for (int i = currentSpeed; i <= 255; i += 5)
   { // speed up
     analogWrite(motor_speed, i);
     delay(100);
   }
-  current_speed = 255;
+  currentSpeed = 255;
 }
 
-void slowReverse_br()
+void slowReverseBr()
 {
   digitalWrite(motor_direction, LOW); // reverse direction
-  move_state = 3;
   analogWrite(motor_speed, 50);
-  current_speed = 50;
+  currentSpeed = 50;
 }
 
 /* Servo Code */
-void open_door()
+void openDoor()
 {
   digitalWrite(servo, HIGH);
-  door_state = 1;
+  doorState = 1;
 }
-void close_door()
+void closeDoor()
 {
   digitalWrite(servo, LOW);
-  door_state = 0;
+  doorState = 0;
 }
 
 /* IR Sensor Code */
 void detect()
 {
-  sensor_status = analogRead(ir_sensor);
+  sensorStatus = analogRead(ir_sensor);
 }

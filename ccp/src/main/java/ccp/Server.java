@@ -90,7 +90,7 @@ public class Server {
      * and then sending Initiation message to MCP and then waiting for a
      * AKIN response from MCP before entering RUNNING state
      */
-    private synchronized void handleInitialisingState(String message, DatagramPacket packet) throws IOException {
+    private void handleInitialisingState(String message, DatagramPacket packet) throws IOException {
         if (message.contains("EXEC_INIT")) {
             espAddress = packet.getAddress();
             espPort = packet.getPort();
@@ -117,7 +117,7 @@ public class Server {
      * Running state - Main loop that will check for several commands from MCP and
      * some packets from ESP.
      */
-    private synchronized void handleRunningState(String message, DatagramPacket packet) throws IOException {
+    private void handleRunningState(String message, DatagramPacket packet) throws IOException {
         if (message.contains("STRQ")) {
             String stat = GenerateMessage.generateStatusMessage(status);
             String mcpACKST = attemptSendPacket(stat, mcpAddress, mcpPort, "AKST", 10);
@@ -147,7 +147,7 @@ public class Server {
      * - Wait for ACK from ESP that it has executed that command
      * - Send back an ACK to MCP
      */
-    private synchronized void handleExecuteCommand(String message) throws IOException {
+    private void handleExecuteCommand(String message) throws IOException {
         packetManager.sendPacket(GenerateMessage.generateAckMessage(), mcpAddress, mcpPort);
 
         String actionString = extractAction(message);
