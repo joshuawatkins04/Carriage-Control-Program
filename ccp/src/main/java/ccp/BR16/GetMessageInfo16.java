@@ -3,34 +3,34 @@ package ccp.BR16;
 import com.fasterxml.jackson.annotation.JsonInclude;
 
 @JsonInclude(JsonInclude.Include.NON_NULL)
-public class GetMessageInfo {
+public class GetMessageInfo16 {
 
-    private String clientType;
+    private String client_type;
     private String message;
-    private String clientID;
-    private int sequenceNumber;
+    private String client_id;
+    private int sequence_number;
     private String action;
     private String status;
     private String brID;
     
-    public GetMessageInfo() {}
+    public GetMessageInfo16() {}
 
-    public GetMessageInfo(String clientType, String message, String clientID, int sequenceNumber, String action, String status, String brID) {
-        this.clientType = clientType;
+    public GetMessageInfo16(String client_type, String message, String client_id, int sequence_number, String action, String status, String brID) {
+        this.client_type = client_type;
         this.message = message;
-        this.clientID = clientID;
-        this.sequenceNumber = sequenceNumber;
+        this.client_id = client_id;
+        this.sequence_number = sequence_number;
         this.action = action;
         this.status = status;
         this.brID = brID;
     }
 
     public String getClientType() {
-        return clientType;
+        return client_type;
     }
 
-    public void setClientType(String clientType) {
-        this.clientType = clientType;
+    public void setClientType(String client_type) {
+        this.client_type = client_type;
     }
 
     public String getMessage() {
@@ -42,19 +42,19 @@ public class GetMessageInfo {
     }
 
     public String getClientID() {
-        return clientID;
+        return client_id;
     }
 
-    public void setClientID(String clientID) {
-        this.clientID = clientID;
+    public void setClientID(String client_id) {
+        this.client_id = client_id;
     }
 
     public int getSequenceNumber() {
-        return sequenceNumber;
+        return sequence_number;
     }
 
-    public void setSequenceNumber(int sequenceNumber) {
-        this.sequenceNumber = sequenceNumber;
+    public void setSequenceNumber(int sequence_number) {
+        this.sequence_number = sequence_number;
     }
 
     public String getAction() {

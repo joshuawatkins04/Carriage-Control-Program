@@ -1,11 +1,13 @@
-package ccp.BR15;
+package ccp.BR16;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.PropertyNamingStrategies;
 
-public class GenerateMessage {
+public class GenerateMessage16 {
     
-    private static final ObjectMapper objectMapper = new ObjectMapper();
+    private static final ObjectMapper objectMapper = new ObjectMapper()
+    .setPropertyNamingStrategy(PropertyNamingStrategies.SNAKE_CASE);
     private static String ccp = "CCP";
     private static String brID = "BR06";
     private static int sequenceNumber = 1000;
@@ -23,7 +25,7 @@ public class GenerateMessage {
     }
 
     private static String generateMessage(String messageType, String status) {
-        GetMessageInfo message = new GetMessageInfo();
+        GetMessageInfo16 message = new GetMessageInfo16();
         message.setClientType(ccp);
         message.setMessage(messageType);
         message.setClientID(brID);
@@ -36,7 +38,7 @@ public class GenerateMessage {
         return sequenceNumber++;
     }
 
-    private static String convertToJson(GetMessageInfo message) {
+    private static String convertToJson(GetMessageInfo16 message) {
         try {
             return objectMapper.writeValueAsString(message);
         } catch (JsonProcessingException e) {

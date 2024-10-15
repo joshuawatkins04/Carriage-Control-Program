@@ -5,13 +5,13 @@ import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.InetAddress;
 
-public class PacketManager {
+public class PacketManager16 {
 
     private static final int bufferSize = 256;
     private static DatagramPacket receivePacket, responsePacket;
     private static DatagramSocket socket;
 
-    public PacketManager(int port) throws IOException {
+    public PacketManager16(int port) throws IOException {
         socket = new DatagramSocket(port);
         socket.setSoTimeout(5000);
     }

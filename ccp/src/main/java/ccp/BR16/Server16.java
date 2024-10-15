@@ -1,4 +1,4 @@
-package ccp.BR15;
+package ccp.BR16;
 
 import java.io.IOException;
 import java.net.DatagramPacket;
@@ -8,26 +8,26 @@ import java.util.Set;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.PropertyNamingStrategies;
 
-public class Server {
+public class Server16 {
 
     private static final String initExpectedResponse = "XXinitXX";
     private static final String execExpectedResponse = "XXexecXX";
     private static InetAddress espAddress, mcpAddress;
     private static String status;
     private static int mcpPort, espPort;
-    private static PacketManager packetManager;
+    private static PacketManager16 packetManager;
     private final Set<String> espCommands;
     private State currentState;
 
-    public static int ccpPort = 3015;
+    public static int ccpPort = 3016;
 
-    public Server(int port) throws IOException {
-        packetManager = new PacketManager(port);
-        // currentState = State.INITIALISING;
-        currentState = State.RUNNING;
+    public Server16(int port) throws IOException {
+        packetManager = new PacketManager16(port);
+        currentState = State.INITIALISING;
         mcpAddress = InetAddress.getByName("10.20.30.1");
-        espAddress = InetAddress.getByName("10.20.30.115");
+        espAddress = InetAddress.getByName("10.20.30.116");
         mcpPort = 2000;
         espPort = 4210;
         status = "ERR";
@@ -36,7 +36,7 @@ public class Server {
 
     public static void main(String[] args) {
         try {
-            Server server = new Server(ccpPort);
+            Server16 server = new Server16(ccpPort); // choose run without mcp or with mcp
             server.start();
         } catch (IOException e) {
             System.out.println("[SERVER] MAJOR ERROR: Server failed to start");
@@ -56,7 +56,7 @@ public class Server {
                     DatagramPacket receivePacket = packetManager.receivePacket();
                     String receivedMessage = new String(receivePacket.getData(), 0, receivePacket.getLength());
 
-                    if (receivePacket.getPort() == 2000) {
+                    if (receivePacket.getPort() == 4000) {
                         System.out.println("[SERVER] Received MCP message: " + receivedMessage);
                     } else {
                         System.out.println("[SERVER] Received ESP message: " + receivedMessage);
@@ -95,14 +95,14 @@ public class Server {
      */
     private void handleInitialisingState(String message, DatagramPacket packet) throws IOException {
         if (message.contains("EXEC_INIT")) {
-            // espAddress = packet.getAddress(); Maybe keep
-            // espPort = packet.getPort(); Maybe keep
+            espAddress = packet.getAddress();
+            espPort = packet.getPort();
             System.out.println("[SERVER] Received INIT from ESP32.");
 
             String espAckWithStat = attemptSendPacket("INIT_CONF", espAddress, espPort, initExpectedResponse, 10);
 
             if (!espAckWithStat.isEmpty()) {
-                String akinMessage = attemptSendPacket(GenerateMessage.generateInitiationMessage(), mcpAddress, mcpPort,
+                String akinMessage = attemptSendPacket(GenerateMessage16.generateInitiationMessage(), mcpAddress, mcpPort,
                         "AKIN", 10);
 
                 if (!akinMessage.isEmpty()) {
@@ -122,7 +122,7 @@ public class Server {
      */
     private void handleRunningState(String message, DatagramPacket packet) throws IOException {
         if (message.contains("STRQ")) {
-            String stat = GenerateMessage.generateStatusMessage(status);
+            String stat = GenerateMessage16.generateStatusMessage(status);
             String mcpACKST = attemptSendPacket(stat, mcpAddress, mcpPort, "AKST", 10);
 
             if (!mcpACKST.isEmpty()) {
@@ -139,7 +139,7 @@ public class Server {
                 } else if (message.contains("STOPO")) {
                     status = "STOPO";
                 }
-                packetManager.sendPacket(GenerateMessage.generateStatusMessage(status), mcpAddress, mcpPort);
+                packetManager.sendPacket(GenerateMessage16.generateStatusMessage(status), mcpAddress, mcpPort);
             }
         }
     }
@@ -151,7 +151,7 @@ public class Server {
      * - Send back an ACK to MCP
      */
     private void handleExecuteCommand(String message) throws IOException {
-        packetManager.sendPacket(GenerateMessage.generateAckMessage(), mcpAddress, mcpPort);
+        packetManager.sendPacket(GenerateMessage16.generateAckMessage(), mcpAddress, mcpPort);
 
         String actionString = extractAction(message);
         String espResponse = attemptSendPacket(actionString, espAddress, espPort, execExpectedResponse, 10);
@@ -164,7 +164,7 @@ public class Server {
                 System.out.println("[SERVER] Received ESP AKIN packet containing updated status: " + espResponse);
                 for (String s : espCommands) {
                     if (espResponse.contains(s)) {
-                        String statUpdate = GenerateMessage.generateStatusMessage(s);
+                        String statUpdate = GenerateMessage16.generateStatusMessage(s);
                         packetManager.sendPacket(statUpdate, mcpAddress, mcpPort); // STAT doesnt need ACK
                         System.out.println("[SERVER] Sent ACK response of new status to MCP. Status: " + s);
                         break;
@@ -222,9 +222,11 @@ public class Server {
     }
     
     private static String extractAction(String message) {
-        ObjectMapper objectMapper = new ObjectMapper();
+        ObjectMapper objectMapper = new ObjectMapper()
+            .setPropertyNamingStrategy(PropertyNamingStrategies.SNAKE_CASE);
+
         try {
-            GetMessageInfo info = objectMapper.readValue(message, GetMessageInfo.class);
+            GetMessageInfo16 info = objectMapper.readValue(message, GetMessageInfo16.class);
             return info.getAction();
         } catch (JsonProcessingException e) {
             e.printStackTrace();

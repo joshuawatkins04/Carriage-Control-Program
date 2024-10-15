@@ -12,13 +12,15 @@
 
 WiFiUDP udp;
 
-const char *ssid = "WIFI NAME";
-const char *password = "WIFI PASSWORD";
+const char *ssid = "ENGG2K3K";
 const unsigned int localUdpPort = 4210; // Local port to listen on
 char incomingPacket[255];               // Buffer for incoming packets
 
-IPAddress javaServerIP(10, 20, 30, 1); // Or could be 10, 20, 30, 115
+IPAddress javaServerIP(10, 20, 30, 142); // Or could be 10, 20, 30, 115
 unsigned int javaServerPort = 3015;
+
+// IPAddress local_ip(10, 20, 30, 115);
+
 
 int state;
 int currentSpeed;
@@ -36,17 +38,19 @@ void setup()
 
   // Connect to Wi-Fi
   Serial.printf("Connecting to %s ", ssid);
-  WiFi.begin(ssid, password);
+  WiFi.begin(ssid);
   while (WiFi.status() != WL_CONNECTED)
   {
     delay(500);
     Serial.print(".");
   }
+  // WiFi.config(local_ip);
   Serial.println(" connected");
 
   // Start listening for UDP packets
   udp.begin(localUdpPort);
   Serial.printf("Now listening at IP %s, UDP port %d\n", WiFi.localIP().toString().c_str(), localUdpPort);
+  //Serial.printf("Now listening at IP %s, UDP port %d\n", local_ip, localUdpPort);
 
   pinMode(motor_speed, OUTPUT);
   pinMode(motor_direction, OUTPUT);
@@ -70,13 +74,14 @@ void loop()
   {
     Serial.println("Initialising connection with ESP and Java Server");
 
-    sendMessage("(INIT) from ESP", javaServerIP, javaServerPort);
+    sendMessage("EXEC_INIT", javaServerIP, javaServerPort);
     delay(1000);
 
     receiveMessage();
 
-    if (strcmp(incomingPacket, "(INIT Confirmed) from CCP") == 0)
+    if (strcmp(incomingPacket, "INIT_CONF") == 0)
     {
+      sendMessage("STOPC", javaServerIP, javaServerPort); // Needs to send actual status of BR
       state = 1;
     }
   }
@@ -87,7 +92,7 @@ void loop()
 
     receiveMessage();
 
-    sendMessage("STOPC", javaServerIP, javaServerPort);
+
     delay(1000);
 
     receiveMessage();
@@ -105,7 +110,6 @@ void loop()
 
     if (distance < 100 && distance > 0) {
       stopBr();
-      closeDoor();
       sendMessage("STOPC", javaServerIP, javaServerPort); // read in the MCP document if we do emergency stop to send STOPC
     }
 
@@ -113,7 +117,6 @@ void loop()
     if (strcmp(incomingPacket, "STOPC") == 0)
     {
       stopBr();
-      closeDoor();
       delay(1000); // Could be bad to have this delay but how do we know when it has
                    // completely stopped?
       sendMessage("STOPC", javaServerIP, javaServerPort);
@@ -122,7 +125,6 @@ void loop()
     else if (strcmp(incomingPacket, "STOPO") == 0)
     {
       stopBr();
-      openDoor();
       sendMessage("STOPO", javaServerIP, javaServerPort);
     }
     // BR should move forward slowly and stop
@@ -173,7 +175,7 @@ void loop()
     // indicate that it is to be removed from track
     else if (strcmp(incomingPacket, "DISCONNECT") == 0)
     {
-      send_message("OFLN", javaServerIP, javaServerPort);
+      sendMessage("OFLN", javaServerIP, javaServerPort);
       safeDisconnect = 1;
       state = 2;
       break;
