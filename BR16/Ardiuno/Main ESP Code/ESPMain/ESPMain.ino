@@ -18,7 +18,7 @@ const char *password = "WIFI PASSWORD";
 const unsigned int localUdpPort = 4210; // Local port to listen on
 char incomingPacket[255];               // Buffer for incoming packets
 
-IPAddress javaServerIP(10, 20, 30, 116);
+IPAddress javaServerIP(10, 20, 30, 1); // 10, 20, 30, 116
 unsigned int javaServerPort = 3016;
 
 int state;

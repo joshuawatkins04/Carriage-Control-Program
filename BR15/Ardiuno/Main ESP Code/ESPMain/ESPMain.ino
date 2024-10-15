@@ -4,7 +4,6 @@
 #define yellow_led 19
 #define red_led 21
 #define ir_sensor 30 // CHANGE
-#define servo 31     // CHANGE
 #define trigger 25
 #define echo 26
 
@@ -18,12 +17,11 @@ const char *password = "WIFI PASSWORD";
 const unsigned int localUdpPort = 4210; // Local port to listen on
 char incomingPacket[255];               // Buffer for incoming packets
 
-IPAddress javaServerIP(10, 20, 30, 115);
+IPAddress javaServerIP(10, 20, 30, 1); // Or could be 10, 20, 30, 115
 unsigned int javaServerPort = 3015;
 
 int state;
 int currentSpeed;
-int doorState;
 int sensorStatus;
 int safeDisconnect;
 
@@ -34,7 +32,6 @@ void setup()
 
   state = 0;
   currentSpeed = 0;
-  doorState = 0;
   safeDisconnect = 0;
 
   // Connect to Wi-Fi
@@ -57,7 +54,6 @@ void setup()
   pinMode(yellow_led, OUTPUT);
   pinMode(red_led, OUTPUT);
   pinMode(ir_sensor, INPUT);
-  pinMode(servo, OUTPUT);
   digitalWrite(green_led, LOW);
   digitalWrite(yellow_led, LOW);
   digitalWrite(red_led, LOW);
@@ -152,8 +148,6 @@ void loop()
     else if (strcmp(incomingPacket, "FFASTC") == 0)
     {
       fastBr();
-      if (doorState == 1)
-        closeDoor();
       sendMessage("FFASTC", javaServerIP, javaServerPort);
     }
     // BR move backwards slowly and stop after it
@@ -263,18 +257,6 @@ void slowReverseBr()
   digitalWrite(motor_direction, LOW); // reverse direction
   analogWrite(motor_speed, 50);
   currentSpeed = 50;
-}
-
-/* Servo Code */
-void openDoor()
-{
-  digitalWrite(servo, HIGH);
-  doorState = 1;
-}
-void closeDoor()
-{
-  digitalWrite(servo, LOW);
-  doorState = 0;
 }
 
 /* IR Sensor Code */

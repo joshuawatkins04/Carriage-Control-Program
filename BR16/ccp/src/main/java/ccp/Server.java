@@ -26,7 +26,9 @@ public class Server {
         packetManager = new PacketManager(port);
         currentState = State.INITIALISING;
         mcpAddress = InetAddress.getByName("10.20.30.1");
+        espAddress = InetAddress.getByName("10.20.30.116");
         mcpPort = 2000;
+        espPort = 4210;
         status = "ERR";
         espCommands = Set.of("STOPC", "STOPO", "FFASTC", "OFLN");
     }
@@ -92,8 +94,8 @@ public class Server {
      */
     private void handleInitialisingState(String message, DatagramPacket packet) throws IOException {
         if (message.contains("EXEC_INIT")) {
-            espAddress = packet.getAddress();
-            espPort = packet.getPort();
+            // espAddress = packet.getAddress(); Might need
+            // espPort = packet.getPort(); Might need
             System.out.println("[SERVER] Received INIT from ESP32.");
 
             String espAckWithStat = attemptSendPacket("INIT_CONF", espAddress, espPort, initExpectedResponse, 10);
