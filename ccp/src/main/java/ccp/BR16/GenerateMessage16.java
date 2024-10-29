@@ -9,7 +9,7 @@ public class GenerateMessage16 {
     private static final ObjectMapper objectMapper = new ObjectMapper()
     .setPropertyNamingStrategy(PropertyNamingStrategies.SNAKE_CASE);
     private static String ccp = "CCP";
-    private static String brID = "BR06";
+    private static String brID = "BR16";
     private static int sequenceNumber = 1000;
 
     public static String generateInitiationMessage() {

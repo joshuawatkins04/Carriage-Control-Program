@@ -20,13 +20,14 @@ public class Server16 {
     private static PacketManager16 packetManager;
     private final Set<String> espCommands;
     private State currentState;
+    private boolean success = false;
 
     public static int ccpPort = 3016;
 
     public Server16(int port) throws IOException {
         packetManager = new PacketManager16(port);
         currentState = State.INITIALISING;
-        mcpAddress = InetAddress.getByName("10.20.30.1");
+        mcpAddress = InetAddress.getByName("10.20.30.177");
         espAddress = InetAddress.getByName("10.20.30.116");
         mcpPort = 2000;
         espPort = 4210; // or 3016
@@ -52,11 +53,13 @@ public class Server16 {
             System.out.println("[SERVER] Listening on port: " + ccpPort);
 
             while (currentState != State.QUIT) {
+                
+                //if (!success) attemptSendPacket(GenerateMessage16.generateInitiationMessage(), mcpAddress, mcpPort,"AKIN", 10);
                 try {
                     DatagramPacket receivePacket = packetManager.receivePacket();
                     String receivedMessage = new String(receivePacket.getData(), 0, receivePacket.getLength());
 
-                    if (receivePacket.getPort() == 4000) {
+                    if (receivePacket.getPort() == 2000) {
                         System.out.println("[SERVER] Received MCP message: " + receivedMessage);
                     } else {
                         System.out.println("[SERVER] Received ESP message: " + receivedMessage);
@@ -107,6 +110,7 @@ public class Server16 {
 
                 if (!akinMessage.isEmpty()) {
                     status = espAckWithStat;
+                    success = true;
                     currentState = State.RUNNING;
                     System.out.println("\n[SERVER] SUCCES: Moving into RUNNING state\n");
                 } else {

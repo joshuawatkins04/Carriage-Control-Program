@@ -16,7 +16,7 @@ const char *ssid = "ENGG2K3K";
 const unsigned int localUdpPort = 4210; // Local port to listen on
 char incomingPacket[255];               // Buffer for incoming packets
 
-IPAddress javaServerIP(10, 20, 30, 1); // Or could be 10, 20, 30, 142 or 115
+IPAddress javaServerIP(10, 20, 30, 147); // Or could be 10, 20, 30, 142 or 115
 unsigned int javaServerPort = 3015;
 
 // IPAddress local_ip(10, 20, 30, 115);
