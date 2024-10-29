@@ -26,10 +26,10 @@ public class Server15 {
     public Server15(int port) throws IOException {
         packetManager = new PacketManager15(port);
         currentState = State.INITIALISING;
-        mcpAddress = InetAddress.getByName("10.20.30.143");
+        mcpAddress = InetAddress.getByName("10.20.30.1");
         espAddress = InetAddress.getByName("10.20.30.115");
-        mcpPort = 2001;
-        espPort = 4210;
+        mcpPort = 2000;
+        espPort = 4210; // or 3015
         status = "ERR";
         espCommands = Set.of("STOPC", "STOPO", "FFASTC", "OFLN");
     }

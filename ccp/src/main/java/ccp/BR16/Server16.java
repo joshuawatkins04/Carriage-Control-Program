@@ -29,7 +29,7 @@ public class Server16 {
         mcpAddress = InetAddress.getByName("10.20.30.1");
         espAddress = InetAddress.getByName("10.20.30.116");
         mcpPort = 2000;
-        espPort = 4210;
+        espPort = 4210; // or 3016
         status = "ERR";
         espCommands = Set.of("STOPC", "STOPO", "FFASTC", "OFLN");
     }

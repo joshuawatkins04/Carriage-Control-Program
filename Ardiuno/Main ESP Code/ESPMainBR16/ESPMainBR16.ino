@@ -1,11 +1,12 @@
 #define motor_direction 23
 #define motor_speed 22
-#define green_led 18
-#define yellow_led 19
-#define red_led 21
-#define ir_sensor 30 // CHANGE
+#define green_led 5 // 18
+#define yellow_led 18 // 19
+#define red_led 19 // 21
+#define ir_sensor 33
 #define trigger 25
 #define echo 26
+#define servo 32
 
 #include <WiFi.h>
 #include <WiFiUdp.h>
@@ -16,8 +17,8 @@ const char *ssid = "ENGG2K3K";
 const unsigned int localUdpPort = 4210; // Local port to listen on
 char incomingPacket[255];               // Buffer for incoming packets
 
-IPAddress javaServerIP(10, 20, 30, 142); // Or could be 10, 20, 30, 115
-unsigned int javaServerPort = 3015;
+IPAddress javaServerIP(10, 20, 30, 1); // Or could be 10, 20, 30, 142 or 116
+unsigned int javaServerPort = 3016;
 
 // IPAddress local_ip(10, 20, 30, 115);
 
